@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Offline Proof · A1 Scout</title>
+    <meta
+      name="description"
+      content="Verify a local AI workflow with OS-enforced network denial and inspect the evidence."
+    />
+    <link rel="icon" href="/favicon.svg" />
+    <link rel="stylesheet" href="/style.css" />
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <aside class="sidebar">
+      <a class="brand" href="/" aria-label="A1 Scout home"
+        ><span class="brand-mark">A1</span
+        ><span>scout<span class="brand-sub">LOCAL INTELLIGENCE</span></span></a
+      >
+      <div class="side-section">WORKSPACE</div>
+      <a class="nav-item selected" href="#workbench"
+        ><span class="nav-icon">◈</span> Offline Proof
+        <span class="nav-count">01</span></a
+      >
+      <a class="nav-item" href="#evidence"
+        ><span class="nav-icon">≡</span> Run evidence</a
+      >
+      <a class="nav-item" href="#setup"
+        ><span class="nav-icon">⚙</span> Local setup</a
+      >
+      <div class="side-note">
+        <span class="tiny-square"></span>
+        <p>
+          Your models.<br />Your machine.<br /><strong
+            >Evidence you can inspect.</strong
+          >
+        </p>
+      </div>
+      <div class="machine-card">
+        <div class="machine-heading">
+          <span class="status-dot" id="connection-dot"></span
+          ><span id="connection">Connecting</span>
+        </div>
+        <strong id="machine-name">Local machine</strong
+        ><span id="machine-spec">Checking hardware…</span>
+      </div>
+      <div class="side-foot">SCOUT LABS <span>v0.1</span></div>
+    </aside>
+    <main id="workbench">
+      <header class="topbar">
+        <div>
+          <span class="breadcrumb">Scout Labs</span
+          ><span class="slash">/</span> Offline Proof
+        </div>
+        <span class="local-badge"
+          ><span class="small-dot"></span> LOCAL WORKSPACE</span
+        >
+      </header>
+      <section class="intro">
+        <div>
+          <div class="eyebrow"><span></span> WORKFLOW VERIFICATION</div>
+          <h1>Prove it works.<br /><span>Without the network.</span></h1>
+          <p>
+            Run your local AI against a real task. Block its network access.<br
+              class="desktop"
+            />
+            Keep the evidence, not just the promise.
+          </p>
+        </div>
+        <div class="proof-seal" aria-hidden="true">
+          <div class="seal-ring">
+            <span class="seal-top">OFFLINE BY TEST</span
+            ><svg viewBox="0 0 70 60" fill="none">
+              <path
+                d="M13 40V19a5 5 0 0 1 5-5h34a5 5 0 0 1 5 5v21M7 46h56M26 29l6 6 13-14"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              /></svg
+            ><span class="seal-bottom">VERIFIED BY EVIDENCE</span>
+          </div>
+        </div>
+      </section>
+      <div id="alert" class="alert" role="alert" hidden></div>
+      <section class="status-strip" aria-label="Current proof status">
+        <div class="status-primary">
+          <span id="result-symbol" class="result-symbol">○</span>
+          <div>
+            <span class="small-label">LATEST RESULT</span
+            ><strong id="result-title">No proof run yet</strong>
+          </div>
+        </div>
+        <div class="status-stat">
+          <span class="small-label">NETWORK</span
+          ><strong id="network-value">Awaiting test</strong>
+        </div>
+        <div class="status-stat">
+          <span class="small-label">TASKS PASSED</span
+          ><strong id="score-value">— <span>/ 3</span></strong>
+        </div>
+        <div class="status-stat">
+          <span class="small-label">ELAPSED</span
+          ><strong id="time-value">—</strong>
+        </div>
+        <button id="export" class="button ghost export-button" disabled>
+          Export report <span>↗</span>
+        </button>
+      </section>
+      <div class="work-grid">
+        <section class="panel workflow-panel">
+          <div class="panel-heading">
+            <div>
+              <div class="eyebrow muted">01 / THE WORKFLOW</div>
+              <h2>Answers from your documents</h2>
+            </div>
+            <span class="pill">DOCUMENT Q&A</span>
+          </div>
+          <p class="panel-description">
+            Three questions. Two facts to find. One question the model should
+            leave unanswered.
+          </p>
+          <div class="document-stack">
+            <span class="file-icon">≡</span>
+            <div>
+              <strong>FieldKit handbook</strong
+              ><span>3 synthetic documents · Markdown · bundled locally</span>
+            </div>
+            <span class="folder-badge">.md</span>
+          </div>
+          <div id="stages" class="stages"></div>
+          <div class="workflow-footer">
+            <span>↳</span> Each stage leaves a record in the proof report.
+          </div>
+        </section>
+        <section class="panel setup-panel" id="setup">
+          <div class="panel-heading">
+            <div>
+              <div class="eyebrow muted">02 / YOUR ENVIRONMENT</div>
+              <h2>Choose the local runtime</h2>
+            </div>
+          </div>
+          <div class="mode-switch" role="group" aria-label="Runtime mode">
+            <button id="mode-mlx" class="mode active" aria-pressed="true">
+              Local model</button
+            ><button id="mode-harness" class="mode" aria-pressed="false">
+              Harness check
+            </button>
+          </div>
+          <div id="mode-note" class="mode-note">
+            Real inference. Your model stays on this machine.
+          </div>
+          <label for="model-select">Model on this machine</label
+          ><select id="model-select">
+            <option value="">Looking for local models…</option>
+          </select>
+          <details id="advanced">
+            <summary>Model path & Python environment <span>+</span></summary>
+            <label for="model-path">Local model folder</label
+            ><input
+              id="model-path"
+              autocomplete="off"
+              spellcheck="false"
+              placeholder="/Volumes/A1/stash/models/mlx/…"
+            /><label for="python-path">Python interpreter</label
+            ><input id="python-path" autocomplete="off" spellcheck="false" />
+          </details>
+          <div class="configuration-notes">
+            <div>
+              <span>Retrieval</span><strong>Local lexical search</strong>
+            </div>
+            <div>
+              <span>Network policy</span><strong>OS-denied subprocess</strong>
+            </div>
+            <div>
+              <span>Quality checks</span
+              ><strong>Facts + citations + abstention</strong>
+            </div>
+          </div>
+          <div class="actions">
+            <button id="run" class="button primary">
+              Run offline proof <span>↗</span></button
+            ><button id="check" class="button secondary">Check setup</button>
+          </div>
+          <p class="run-note">
+            One model at a time. No downloads during a run.
+          </p>
+          <div id="checks" class="checks" aria-live="polite"></div>
+        </section>
+      </div>
+      <section class="panel evidence-panel" id="evidence">
+        <div class="panel-heading">
+          <div>
+            <div class="eyebrow muted">03 / SHOW YOUR WORK</div>
+            <h2>The answer is only half the proof.</h2>
+          </div>
+          <span id="evidence-label" class="pill">WAITING FOR A RUN</span>
+        </div>
+        <div id="evidence-content" class="evidence-content">
+          <div class="empty-evidence">
+            <span class="empty-icon">⌕</span>
+            <div>
+              <strong>Every answer gets a paper trail.</strong>
+              <p>
+                Run a proof to inspect answers, source quotations, quality
+                checks, and network-denial evidence.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="bottom-grid">
+        <div>
+          <span class="eyebrow muted">WHAT THIS PROVES</span>
+          <p>
+            A specific workflow completed with the runner’s network access
+            denied. It does not mean the entire Mac is air-gapped, or that every
+            answer the model gives will be correct.
+          </p>
+        </div>
+        <div>
+          <span class="eyebrow muted">RECENT RUNS</span>
+          <div id="history" class="history">
+            <span>No saved runs on this machine.</span>
+          </div>
+        </div>
+      </section>
+      <footer>
+        <span
+          ><b>A1</b> SCOUT <span class="footer-divider">/</span> OFFLINE
+          PROOF</span
+        ><span>Built for the work beyond Wi-Fi.</span>
+      </footer>
+    </main>
+  </body>
+</html>

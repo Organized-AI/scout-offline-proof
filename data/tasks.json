@@ -1,0 +1,5 @@
+[
+  {"id":"retention","question":"How long does the offline upload buffer retain observations?","expected":["72 hours"],"source":"01-retention.md","answerable":true},
+  {"id":"integrity","question":"Which checksum algorithm does FieldKit use to verify field bundles before import?","expected":["SHA-256"],"source":"02-integrity.md","answerable":true},
+  {"id":"unknown","question":"What is FieldKit's monthly subscription price?","expected":[],"source":null,"answerable":false}
+]
