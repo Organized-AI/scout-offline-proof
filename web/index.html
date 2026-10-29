@@ -61,7 +61,7 @@
             ><strong id="network-value">Awaiting test</strong>
           </div>
           <div class="status-stat">
-            <span class="small-label">TASKS PASSED</span
+            <span class="small-label" id="score-label">TASKS PASSED</span
             ><strong id="score-value">— <span>/ —</span></strong>
           </div>
           <div class="status-stat">
@@ -134,6 +134,9 @@
             <div id="harness-options" hidden>
               <label for="harness-case">Fixture scenario</label
               ><select id="harness-case">
+                <option value="failure-replay">
+                  Failure replay · accept/reject checks
+                </option>
                 <option value="valid">Valid responses · should pass</option>
                 <option value="wrong-answer">
                   Wrong answers · should fail
@@ -143,8 +146,8 @@
                 </option>
               </select>
               <p class="hint">
-                Failure scenarios test whether the evaluator catches errors. No
-                model is used.
+                Replay tests whether valid responses are accepted and known
+                failures are rejected. No model or proposed tool is executed.
               </p>
             </div>
             <label for="model-select">Model on this machine</label
@@ -197,6 +200,7 @@
             <span id="evidence-label" class="chip">WAITING FOR A RUN</span>
           </div>
           <p class="hint" id="report-meta"></p>
+          <div id="harness-summary" hidden></div>
           <div id="category-results" class="category-results"></div>
           <div id="evidence-content" class="evidence-content">
             <div class="empty-evidence">

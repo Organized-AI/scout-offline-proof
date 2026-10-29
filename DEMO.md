@@ -30,23 +30,23 @@ I built Scout Offline Proof to test the whole workflow and keep evidence of what
 
 **Say:**
 
-“There are ten tasks across three suites. Document Q&A checks answers against local sources. Structured extraction checks whether the model returns the right fields, values, and JSON types. Tool selection checks whether an agent chooses an allowed tool with the right arguments—and knows when to ask for missing information or decline an unsupported action.
+“There are ten tasks across three suites. Document Q&A checks answers against local sources. Structured extraction checks fields, values, and JSON types. In the third suite, Qwen acts as a decision model. It chooses an allowed tool and its arguments, asks for missing information, or declines an unsupported action.
 
 These are small, synthetic acceptance tests. You can supply your own tasks for the work your team actually needs.”
 
 ## 1:00–1:35 — Show that the evaluator catches failures
 
-**On screen:** Click **Harness check**. Select **Wrong answers · should fail**. Click **Run harness check**. Show **Fixture errors detected**, **0/10**, and one failed check. Then select **Valid responses · should pass** for the next time harness mode is used.
+**On screen:** Select **Agent tool selection**, click **Harness check**, and choose **Failure replay · accept/reject checks**. Click **Run harness check**. Show **32/32 cases verified**, **4/4 valid accepted**, **28/28 invalid rejected**, and zero false accepts/rejects. Select a **Missing required argument** case to inspect its expected rejection.
 
 **Say:**
 
-“First, I want to know that the evaluator can catch mistakes. Harness mode feeds it fixed responses without loading a language model. Here I'm deliberately injecting wrong answers.
+“How do I know the evaluator works? Harness mode replays prepared decisions without loading a model. These include valid calls, invented tools, missing arguments, and a valid tool chosen for the wrong request.
 
-It rejects them. I can inspect exactly which checks failed. There's also a malformed-JSON scenario. This is a test of the testing pipeline; it does not count as proof that a model works offline.”
+Here it accepted four valid responses and rejected 28 invalid ones. All 32 judgments matched the expected verdict. A bad response that is correctly rejected is a successful harness check. This tests the evaluator; the next run tests the model itself.”
 
 ## 1:35–2:10 — Run real inference
 
-**On screen:** Switch to **Local model** and click **Run offline proof**. Keep the run stages visible while it executes.
+**On screen:** Select **All acceptance suites**, switch to **Local model**, and click **Run offline proof**. Keep the run stages visible while it executes.
 
 **Say:**
 

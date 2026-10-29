@@ -10,7 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 BUILTINS = ("fieldkit-qa", "extraction", "tool-routing")
 KINDS = {"grounded_qa", "json_exact", "tool_call"}
-HARNESS_CASES = {"valid", "wrong-answer", "malformed-json"}
+HARNESS_CASES = {"valid", "wrong-answer", "malformed-json", "failure-replay"}
 TYPES = {"string", "integer", "number", "boolean", "null"}
 
 
@@ -166,7 +166,81 @@ def prepare_task(task, documents, mode):
     result["documents"] = documents
     if mode == "harness":
         result["fixture"] = task["fixture"]
+        if "fixture_output" in task:
+            result["fixture_output"] = task["fixture_output"]
     return result
+
+
+def replay_tasks(tasks):
+    """Known accept/reject cases, authored independently of validator decisions."""
+    cases = []
+    for task in tasks:
+        fixture = task["fixture"]
+        def add(slug, label, value, accepted=False, raw=False):
+            cases.append({**task, "id": task["id"] + "::" + slug, "base_task_id": task["id"],
+                          "case_label": label, "expected_accept": accepted,
+                          "fixture_output": value if raw else json.dumps(value)})
+        add("valid", "Valid response", fixture, accepted=True)
+        add("malformed", "Malformed JSON", '{"broken":', raw=True)
+        if task["kind"] == "grounded_qa":
+            wrong = {**fixture, "answer": "UNSUPPORTED_FIXTURE_ANSWER"}
+            add("wrong-fact", "Wrong fact" if task["answerable"] else "Invented answer instead of abstention", wrong)
+            if task["answerable"]:
+                add("wrong-source", "Invented source", {**fixture, "source": "__nonexistent_source__.md"})
+                add("invented-quote", "Fabricated supporting quote", {**fixture, "quote": "This invented quotation is not present in the supplied source."})
+        elif task["kind"] == "json_exact":
+            key = next(iter(task["fields"]))
+            missing = {k: v for k, v in fixture.items() if k != key}
+            add("missing-field", "Missing required field", missing)
+            add("wrong-type", "Wrong JSON type", {**fixture, key: []})
+            add("wrong-value", "Incorrect extracted value", {**fixture, key: _different(fixture.get(key))})
+            extra = _unused("unexpected_field", task["fields"])
+            add("extra-field", "Unexpected output field", {**fixture, extra: True})
+        else:
+            names = [t["name"] for t in task["tools"]]
+            add("unknown-tool", "Invented or unsupported tool", {"tool": _unused("upload_files", names), "arguments": {}})
+            tool = next((t for t in task["tools"] if t["name"] == fixture.get("tool")), None)
+            arguments = fixture.get("arguments")
+            if tool and isinstance(arguments, dict):
+                if tool["arguments"]:
+                    key = next(iter(tool["arguments"]))
+                    add("missing-argument", "Missing required argument", {**fixture, "arguments": {k: v for k, v in arguments.items() if k != key}})
+                    add("wrong-type", "Wrong argument type", {**fixture, "arguments": {**arguments, key: []}})
+                    add("wrong-value", "Incorrect argument value", {**fixture, "arguments": {**arguments, key: _different(arguments.get(key))}})
+                extra = _unused("unexpected_argument", tool["arguments"])
+                add("extra-argument", "Unexpected tool argument", {**fixture, "arguments": {**arguments, extra: True}})
+            other = next((t for t in task["tools"] if t["name"] != fixture.get("tool")), None)
+            if other:
+                values = {"string": "fixture", "integer": 0, "number": 0.0, "boolean": False, "null": None}
+                args = {k: values[v.split("|")[0]] for k, v in other["arguments"].items()}
+                add("wrong-tool", "Allowed tool, wrong choice", {"tool": other["name"], "arguments": args})
+    return cases
+
+
+def _unused(name, existing):
+    while name in existing:
+        name += "_"
+    return name
+
+
+def _different(value):
+    if type(value) is bool:
+        return not value
+    if type(value) in {int, float}:
+        return value + 1
+    if isinstance(value, str):
+        return value + "_INCORRECT"
+    return "INCORRECT_FIXTURE"
+
+
+def replay_summary(answers, count):
+    valid = [a for a in answers if a["expected_accept"]]
+    invalid = [a for a in answers if not a["expected_accept"]]
+    return {"case_count": count, "checked": len(answers), "matched": sum(a["passed"] for a in answers),
+            "valid_cases": len(valid), "valid_accepted": sum(a["validator_accepted"] for a in valid),
+            "invalid_cases": len(invalid), "invalid_rejected": sum(not a["validator_accepted"] for a in invalid),
+            "false_accepts": sum(a["validator_accepted"] for a in invalid),
+            "false_rejects": sum(not a["validator_accepted"] for a in valid)}
 
 
 def evaluate_structured(task, output):

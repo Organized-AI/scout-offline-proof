@@ -130,11 +130,15 @@ function expectedFailure(r) {
   return (
     r?.mode === "harness" &&
     r.config?.harness_case &&
-    r.config.harness_case !== "valid" &&
+    ["wrong-answer", "malformed-json"].includes(r.config.harness_case) &&
     r.stages?.some((s) => s.id === "quality" && s.status === "failed")
   );
 }
 function title(r) {
+  if (r?.harness && r.status !== "running")
+    return r.status === "harness_passed"
+      ? "Evaluator checks passed"
+      : "Evaluator check failed";
   return expectedFailure(r)
     ? "Fixture errors detected"
     : titles[r?.status] || "No proof run yet";
@@ -167,7 +171,8 @@ function render() {
       ? "Not enforced"
       : "Awaiting test";
   $("score-value").innerHTML =
-    `${r ? (r.answers || []).filter((a) => a.passed).length : "—"} <span>/ ${r ? (r.suite?.task_count ?? (r.answers?.length || "—")) : "—"}</span>`;
+    `${r ? (r.answers || []).filter((a) => a.passed).length : "—"} <span>/ ${r ? (r.harness?.case_count ?? r.suite?.task_count ?? (r.answers?.length || "—")) : "—"}</span>`;
+  $("score-label").textContent = r?.harness ? "CASES VERIFIED" : "TASKS PASSED";
   $("time-value").textContent = r
     ? `${r.elapsed_s?.toFixed(1) || "0.0"} s`
     : "—";
@@ -217,6 +222,12 @@ function render() {
   $("report-meta").textContent = r
     ? `${r.suite?.name || "Original Q&A suite"} · ${r.mode === "harness" ? `Fixtures: ${r.config?.harness_case || "valid"}` : model || "Local model"} · ${new Date(r.started_at).toLocaleString()}`
     : "";
+  $("harness-summary").hidden = !r?.harness;
+  if (r?.harness) {
+    const h = r.harness;
+    $("harness-summary").innerHTML =
+      `<p class="hint">Evaluator self-test · ${r.suite.task_count} tasks, ${h.case_count} fixture cases. A case passes when the evaluator makes the expected accept/reject decision. This is not model accuracy.</p><div class="category-results"><div class="category-result">Valid accepted<b>${h.valid_accepted}/${h.valid_cases}</b></div><div class="category-result">Invalid rejected<b>${h.invalid_rejected}/${h.invalid_cases}</b></div><div class="category-result ${h.false_accepts ? "bad" : ""}">False accepts<b>${h.false_accepts}</b></div><div class="category-result ${h.false_rejects ? "bad" : ""}">False rejects<b>${h.false_rejects}</b></div></div>`;
+  }
   const answers = r?.answers || [],
     categories = {};
   for (const a of answers) {
@@ -239,9 +250,12 @@ function render() {
     const response = qa
       ? `<h3>${esc(p?.answer === "NOT_FOUND" ? "Not found in the supplied documents." : p?.answer || "Response could not be validated")}</h3>${p?.source ? `<span class="source-tag">↳ ${esc(p.source)}</span><blockquote>${esc(p.quote)}</blockquote>` : ""}`
       : `<pre>${esc(p == null ? "Response could not be parsed." : pretty(p))}</pre>`;
+    const verdict = r.harness
+      ? `<div class="case-verdict ${a.passed ? "" : "bad"}"><strong>${a.passed ? "Expected decision matched" : "Evaluator decision mismatch"}</strong><span>Expected: ${a.expected_accept ? "accept" : "reject"} · Evaluator: ${a.validator_accepted ? "accepted" : "rejected"}</span></div>`
+      : "";
     const detailsKey = `${r.id}:${a.id}`;
     $("evidence-content").innerHTML =
-      `<div class="evidence-layout"><div class="answer-list">${answers.map((answer, i) => `<button class="answer-card ${answer.passed ? "" : "failed"} ${i === selectedAnswer ? "selected" : ""}" data-answer="${i}" aria-pressed="${i === selectedAnswer}"><span class="answer-icon">${answer.passed ? "✓" : "!"}</span><div><strong>${esc(answer.kind && answer.kind !== "grounded_qa" ? answer.id.split(".").pop().replaceAll("-", " ") : answer.question)}</strong><small>${answer.passed ? "PASSED" : "FAILED"} · ${esc(kindNames[answer.kind] || "Grounded Q&A")} · ${answer.seconds.toFixed(2)} s</small></div></button>`).join("")}</div><div class="answer-detail"><span class="eyebrow">${r.mode === "harness" ? "FIXTURE RESPONSE" : "MODEL RESPONSE"}</span>${response}${a.input ? `<details><summary>Task input <span>+</span></summary><p class="task-input">${esc(a.question)}\n\n${esc(a.input)}</p></details>` : ""}${a.checks.map((c) => `<div class="answer-check ${c.passed ? "" : "bad"}">${c.passed ? "✓" : "✕"} ${esc(c.label)}${c.detail ? `: ${esc(c.detail)}` : ""}</div>`).join("")}${!qa ? `<details><summary>Expected output <span>+</span></summary><pre>${esc(pretty(a.expected))}</pre></details>` : ""}<details id="raw-response" ${openDetails.has(detailsKey) ? "open" : ""}><summary>Inspect raw response <span>+</span></summary><pre>${esc(a.raw)}</pre></details></div></div>${networkHTML(r)}`;
+      `<div class="evidence-layout"><div class="answer-list">${answers.map((answer, i) => `<button class="answer-card ${answer.passed ? "" : "failed"} ${i === selectedAnswer ? "selected" : ""}" data-answer="${i}" aria-pressed="${i === selectedAnswer}"><span class="answer-icon">${answer.passed ? "✓" : "!"}</span><div><strong>${esc(answer.case_label ? `${answer.base_task_id.split(".").pop().replaceAll("-", " ")} · ${answer.case_label}` : answer.kind && answer.kind !== "grounded_qa" ? answer.id.split(".").pop().replaceAll("-", " ") : answer.question)}</strong><small>${answer.case_label ? (answer.passed ? (answer.expected_accept ? "ACCEPTED AS EXPECTED" : "REJECTED AS EXPECTED") : "MISMATCH") : answer.passed ? "PASSED" : "FAILED"} · ${esc(kindNames[answer.kind] || "Grounded Q&A")} · ${answer.seconds.toFixed(2)} s</small></div></button>`).join("")}</div><div class="answer-detail"><span class="eyebrow">${r.mode === "harness" ? "FIXTURE RESPONSE" : "MODEL RESPONSE"}</span>${verdict}${response}${a.input ? `<details><summary>Task input <span>+</span></summary><p class="task-input">${esc(a.question)}\n\n${esc(a.input)}</p></details>` : ""}${a.checks.map((c) => `<div class="answer-check ${c.passed ? "" : "bad"}">${c.passed ? "✓" : "✕"} ${esc(c.label)}${c.detail ? `: ${esc(c.detail)}` : ""}</div>`).join("")}${!qa ? `<details><summary>${r.harness ? "Reference correct output" : "Expected output"} <span>+</span></summary><pre>${esc(pretty(a.expected))}</pre></details>` : ""}<details id="raw-response" ${openDetails.has(detailsKey) ? "open" : ""}><summary>Inspect raw response <span>+</span></summary><pre>${esc(a.raw)}</pre></details></div></div>${networkHTML(r)}`;
     document.querySelectorAll("[data-answer]").forEach(
       (b) =>
         (b.onclick = () => {
@@ -313,7 +327,10 @@ function setMode(value) {
   check();
 }
 $("mode-mlx").onclick = () => setMode("mlx");
-$("mode-harness").onclick = () => setMode("harness");
+$("mode-harness").onclick = () => {
+  $("harness-case").value = "failure-replay";
+  setMode("harness");
+};
 $("suite-select").onchange = () => {
   suiteInfo =
     state.info.suites.find((s) => s.id === $("suite-select").value) || null;

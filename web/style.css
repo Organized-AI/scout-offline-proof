@@ -849,3 +849,20 @@ footer {
     animation: none !important;
   }
 }
+
+.case-verdict {
+  border: 1px solid var(--good);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin: 12px 0;
+  color: var(--good);
+  font: 11px/1.7 var(--mono);
+}
+.case-verdict strong,
+.case-verdict span {
+  display: block;
+}
+.case-verdict.bad {
+  color: var(--bad);
+  border-color: var(--bad);
+}

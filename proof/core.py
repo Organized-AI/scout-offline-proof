@@ -17,7 +17,8 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
-from .suites import HARNESS_CASES, catalog, evaluate_structured, load_suite, parse_json, prepare_task, summary
+from .suites import (HARNESS_CASES, catalog, evaluate_structured, load_suite, parse_json,
+                     prepare_task, replay_summary, replay_tasks, summary)
 
 ROOT = Path(__file__).resolve().parents[1]
 SANDBOX = "/usr/bin/sandbox-exec"
@@ -162,7 +163,7 @@ def preflight(config):
     except (OSError, ValueError, TypeError, RecursionError) as exc:
         add("Task suite", False, str(exc), "Choose a bundled suite or a valid local suite JSON file. See README for its format.")
     add("Harness scenario", config.get("harness_case", "valid") in HARNESS_CASES,
-        config.get("harness_case", "valid"), "Choose valid, wrong-answer, or malformed-json.")
+        config.get("harness_case", "valid"), "Choose failure-replay, valid, wrong-answer, or malformed-json.")
     try:
         if suite and any(t["kind"] == "grounded_qa" for t in suite["tasks"]):
             docs = read_corpus(config["documents"])
@@ -206,6 +207,7 @@ def preflight(config):
 def run(config, publish=lambda r: None, timeout=300):
     """The coordinator is online; the actual workflow runs entirely in a denied subprocess."""
     config = {"suite": "fieldkit-qa", "harness_case": "valid", **config, "mode": config.get("mode", "mlx")}
+    replay = config["mode"] == "harness" and config["harness_case"] == "failure-replay"
     if config["mode"] not in {"mlx", "harness"}:
         raise ValueError("Unknown runtime mode")
     report = {"schema_version": 2, "id": str(uuid.uuid4()), "started_at": now(), "status": "running",
@@ -240,7 +242,9 @@ def run(config, publish=lambda r: None, timeout=300):
         report["generation"] = {"max_tokens": suite["max_tokens"], "temperature": 0, "seed": 0}
         stage("preflight", "passed")
         stage("manifest", "running")
-        tasks = suite["tasks"]
+        tasks = replay_tasks(suite["tasks"]) if replay else suite["tasks"]
+        if replay:
+            report["harness"] = replay_summary([], len(tasks))
         needs_corpus = any(t["kind"] == "grounded_qa" for t in tasks)
         corpus = read_corpus(config["documents"]) if needs_corpus else []
         prepared = [prepare_task(t, retrieve(t["question"], corpus, suite["retrieval_limit"]) if t["kind"] == "grounded_qa" else [], config["mode"]) for t in tasks]
@@ -317,11 +321,19 @@ def run(config, publish=lambda r: None, timeout=300):
                         raise ValueError("Runner returned a duplicate task result.")
                     task = next(t for t in tasks if t["id"] == event["id"])
                     docs = next(t["documents"] for t in prepared if t["id"] == event["id"])
+                    result = evaluate(task, event["output"], docs)
+                    if replay:
+                        accepted = result["passed"]
+                        result.update(validator_accepted=accepted, expected_accept=task["expected_accept"],
+                                      passed=accepted == task["expected_accept"], case_label=task["case_label"],
+                                      base_task_id=task["base_task_id"])
                     report["answers"].append({"id": task["id"], "kind": task["kind"], "suite_id": task["suite_id"],
                                               "question": task["question"], "input": task.get("input"),
                                               "expected": task["expected"], "raw": event["output"],
                                               "seconds": event["seconds"], "retrieved_sources": [d["source"] for d in docs],
-                                              **evaluate(task, event["output"], docs)})
+                                              **result})
+                    if replay:
+                        report["harness"] = replay_summary(report["answers"], len(tasks))
                     emit()
                 elif kind == "error":
                     raise ValueError(event["message"])
@@ -342,7 +354,8 @@ def run(config, publish=lambda r: None, timeout=300):
         stage("quality", "passed" if quality else "failed")
         report["status"] = ("verified" if config["mode"] == "mlx" else "harness_passed") if quality else "failed"
         if not quality:
-            report["error"] = "The workflow completed offline, but one or more answers failed the quality checks."
+            report["error"] = ("The evaluator accepted an invalid fixture or rejected a valid one. Inspect the mismatched cases."
+                               if replay else "The workflow completed offline, but one or more answers failed the quality checks.")
     except Exception as exc:
         report["status"] = "failed"
         report["error"] = str(exc)

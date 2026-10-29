@@ -54,6 +54,8 @@ def messages(task):
 
 def harness_answer(task, case="valid"):
     """A plumbing fixture, never credited as real inference or an offline model proof."""
+    if case == "failure-replay":
+        return task["fixture_output"]
     if case == "malformed-json":
         return '{"broken":'
     value = json.loads(json.dumps(task["fixture"]))

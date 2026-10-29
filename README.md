@@ -45,7 +45,16 @@ No API keys, environment secrets, accounts, cloud service, or `.env` file are ne
 
 Tool selection is a contract test: **proposed calls are never executed**. The supplied examples are synthetic and small; passing does not establish general agent safety.
 
-The harness has three fixture scenarios in the dashboard and CLI:
+The recommended **Failure replay** tests the evaluator's decisions. Every task supplies a valid control plus known invalid responses. For agent tool selection, the four tasks become 32 cases: four responses that should be accepted and 28 that should be rejected. These include invented tools, missing/extra arguments, wrong argument types and values, and an allowed tool chosen for the wrong request. Across all three suites, replay runs 63 cases.
+
+Replay reports **cases verified**, valid responses accepted, invalid responses rejected, false accepts, and false rejects. A replay case passes when the evaluator's decision matches the expected verdict—even when that verdict is rejection. Any mismatch fails the harness. Automated tests deliberately replace the evaluator with always-accept and always-reject implementations to ensure replay catches both defects. Replay cannot earn **Verified offline**.
+
+```sh
+python3 -m proof run --mode harness --suite tool-routing --harness-case failure-replay
+python3 -m proof run --mode harness --suite all --harness-case failure-replay
+```
+
+The simpler fixture scenarios are also available:
 
 ```sh
 python3 -m proof run --mode harness --suite all --harness-case valid
@@ -54,6 +63,10 @@ python3 -m proof run --mode harness --suite all --harness-case malformed-json
 ```
 
 For the bundled suites, `valid` produces `harness_passed` and exit 0. Both fault scenarios deliberately produce failed tasks, `failed` status, and exit 1. A failure here demonstrates that the evaluator catches the injected faults; it is not an inference result. Custom suites replay your supplied fixtures, so inspect their actual scores and fault results rather than assuming a fixture is correct. `--harness-case` has no effect on real model outputs.
+
+### Where the decision model fits
+
+In the tool-selection suite, the local language model acts as a decision model: it receives a request and tool contracts, then proposes an action with arguments, requests clarification, or selects no action. The evaluator applies explicit acceptance criteria to that proposal. Harness replay checks the evaluator using prepared decisions; real inference checks the model's actual decisions under OS network denial. No second language model judges the outputs, and the proposed actions are not executed in this release.
 
 ## Configure your own tasks
 
