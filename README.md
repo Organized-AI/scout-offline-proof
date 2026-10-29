@@ -4,6 +4,8 @@
 
 A standalone local companion to A1 Scout, built during the October 2026 AITX / MLOps hackathon. It checks a local MLX setup, runs configurable acceptance tasks under macOS network denial, validates the outputs, and exports an evidence report.
 
+The longer-term goal is to carry known online agent workflows onto local hardware and improve their offline results against measured results from frontier models with their harnesses. The current release supplies the evaluation foundation. Full tool execution, reference capture/comparison, automatic fallback, and tuning automation are planned in [PLAN.md](PLAN.md#workflow-portability-and-continuous-improvement); they are not implemented yet.
+
 ## Run the dashboard
 
 macOS on Apple silicon; Python 3.10 or newer. The dashboard and harness use the standard library only.
@@ -67,6 +69,12 @@ For the bundled suites, `valid` produces `harness_passed` and exit 0. Both fault
 ### Where the decision model fits
 
 In the tool-selection suite, the local language model acts as a decision model: it receives a request and tool contracts, then proposes an action with arguments, requests clarification, or selects no action. The evaluator applies explicit acceptance criteria to that proposal. Harness replay checks the evaluator using prepared decisions; real inference checks the model's actual decisions under OS network denial. No second language model judges the outputs, and the proposed actions are not executed in this release.
+
+### From evaluator checks to an agent harness
+
+An agent execution harness also controls skills, context, retrieval, tool execution, state, retries, and budgets. The current **Harness check** validates the evaluator; it does not train a model or run that full agent loop. The planned tuning loop changes the model/harness configuration while holding the evaluation criteria fixed, then checks improvement on separate held-out tasks. Weight fine-tuning is an optional later step.
+
+The measurable target is comparable performance on specified workflows and resource budgets. No comparison with a frontier model has been run, and passing the bundled tasks does not establish frontier parity. A workflow requiring fresh remote data or a remote side effect needs an explicit offline adaptation or an incomplete result.
 
 ## Configure your own tasks
 
@@ -162,6 +170,6 @@ Tests exercise unsupported sources, invented quotations, wrong facts, abstention
 - **Corpus:** UTF-8 `.md`/`.txt`, at most 100 files / 2 MB, configurable top 1–5 documents, each limited to 7,000 characters. The bundled Q&A criteria belong to FieldKit; unrelated documents need a matching custom suite. PDF ingestion is future work.
 - **Resources:** one model per run, model weights below 70% of physical memory, and a suite-defined token budget. Actual memory overhead can exceed the weight size. Choose a small model on shared machines.
 - **Reports:** local, unsigned records containing machine names and file paths. Inspect/redact them before publishing. They support debugging and reproducibility, not third-party attestation.
-- Next: record model revision provenance, compare model revisions, expand validators, and integrate a results view with the native Scout app.
+- Next: execute a complete local workflow, import versioned online reference runs, and compare configurations using a frozen rubric and held-out cases. See the milestones in `PLAN.md`.
 
 See `DEMO.md` for the live walkthrough and `SUBMISSION.md` for the draft event write-up.

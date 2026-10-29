@@ -1,6 +1,6 @@
 # Loom script — Scout Offline Proof
 
-**Video title:** Scout Offline Proof: testing local AI beyond Wi-Fi
+**Video title:** Scout Offline Proof: a foundation for taking agent workflows offline
 
 **Target length:** 4:00–4:30
 
@@ -10,7 +10,7 @@
 
 1. Start `python3 -m proof serve` from this repository and open http://127.0.0.1:8741.
 2. Keep A1 connected. Select **All acceptance suites**, **Local model**, and **Qwen3-4B-Instruct-2507-4bit · A1**. Under Local paths, use this project's `.venv/bin/python` and bundled `data/fieldkit` documents.
-3. Rehearse a real run once. Confirm the actual result; do not assume it will always pass or take the same time. The measured reference run passed 10/10 in 20.84 seconds.
+3. Rehearse a real run once. Confirm the actual result; do not assume it will always pass or take the same time. An earlier measured local run passed 10/10 in 20.84 seconds.
 4. Use a browser window around 1440 × 1000, the dark theme, and readable zoom. Start at the top of the dashboard. Keep the downloaded report and `data/suites/extraction.json` ready to show near the end.
 5. Use the synthetic bundled data throughout. Close unrelated tabs and notifications. The JSON report includes local paths and machine names; select the relevant sections when showing it.
 
@@ -20,9 +20,9 @@
 
 **Say:**
 
-“I keep local AI models on this A1 drive. But having a model downloaded doesn't tell me whether it can actually do useful work without internet access. The tokenizer might be missing, the runtime might fail, or the model might give an answer that looks convincing but is wrong.
+“Online agent workflows can research documents, extract records, and decide which tools to use. I want to bring suitable workflows onto the models stored on this A1 drive, so useful work can continue when connectivity disappears.
 
-I built Scout Offline Proof to test the whole workflow and keep evidence of what happened.”
+Scout Offline Proof is the evaluation foundation. It checks what this local setup can do with network access denied, and keeps evidence of the results.”
 
 ## 0:30–1:00 — What the tool tests
 
@@ -56,9 +56,9 @@ The tool checks the setup and hashes the inputs. It then starts the inference pr
 
 The model runs each task, and a separate evaluator checks the outputs. Expected answers are not included in the model's prompts.”
 
-**Timing:** The reference run took about 21 seconds. If your live run takes longer, let it finish; do not substitute the fixture results.
+**Timing:** An earlier local run took about 21 seconds. If your live run takes longer, let it finish; do not substitute the fixture results.
 
-## 2:10–3:10 — Explain the actual results
+## 2:10–3:05 — Explain the actual results
 
 **On screen:** Show the total and category scores. In Run evidence, open the retention answer; then select **missing value** and **unsupported action**. Open **Expected output** where useful.
 
@@ -74,7 +74,7 @@ For the unsupported upload request, the model selects no action instead of inven
 
 **If a live task fails, use instead:** “The run completed, but this task failed its acceptance check. Here is the actual output and the expected result. This is the kind of problem the tool is designed to expose before deployment.” Then continue with the evidence.
 
-## 3:10–3:40 — Define the offline claim
+## 3:05–3:35 — Define the offline claim
 
 **On screen:** Scroll to the four network probes.
 
@@ -84,17 +84,19 @@ For the unsupported upload request, the model selects no action instead of inven
 
 The restriction applies to the inference process and its descendants. My dashboard and the rest of the Mac remain online. The evidence is that these particular tasks completed with that process's network access blocked—not that the entire computer is air-gapped or every future answer will be correct.”
 
-## 3:40–4:15 — Evidence, configuration, and value
+## 3:35–4:30 — Evidence and the path to portable workflows
 
 **On screen:** Click **Export report**. Show the suite name, an answer with its checks, and the file hashes. Briefly show `data/suites/extraction.json` or expand **Configure your own tasks**.
 
 **Say:**
 
-“The report keeps the actual outputs, expected values, checks, timings, runtime versions, and input hashes. That gives us something concrete to inspect when a setup or model changes.
+“The report saves outputs, checks, timings, runtime versions, and hashes, so changes can be compared. A custom suite lets you define what success means for your own tasks.
 
-To adapt this, copy a suite JSON file and change the inputs and acceptance criteria. The same harness can check your fixtures before you run them against a real model.
+The next milestone is a complete local workflow: read a field report, extract its details, run a checksum tool, and produce a sourced result.
 
-Scout Offline Proof is agent tooling for developers who need dependable local AI. It turns ‘the model is on the drive’ into a much more useful question: can this setup finish the work, with evidence we can inspect?”
+Then we can compare the same workflow against an online frontier model and its harness. We'll tune prompts, skills, retrieval, tools, and model choice against fixed criteria, with separate held-out tests.
+
+That comparison and tuning loop is planned. The target is comparable results on defined workflows, measured over time. Today, we have working offline acceptance tests and evaluator checks to build on.”
 
 ## Recording notes
 
@@ -102,4 +104,5 @@ Scout Offline Proof is agent tooling for developers who need dependable local AI
 - Keep “harness” and “real model” labels visible when switching modes.
 - The report is an unsigned local record, not independent certification.
 - Do not call this a fully autonomous agent or claim that its proposed tools were executed.
+- Describe workflow execution, reference comparison, automatic fallback, and tuning automation as planned capabilities. No frontier comparison or weight fine-tuning has been run.
 - If you need to shorten the video, omit the custom-file preview and show only one extraction example.
