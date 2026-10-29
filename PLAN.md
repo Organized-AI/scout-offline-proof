@@ -4,7 +4,7 @@ Build date: October 28, 2026. Target: AITX / MLOps Agents track.
 
 ## Product
 
-Make useful online agent workflows portable to local hardware, verify what completes under enforced network denial, and improve local performance against measured reference runs from frontier models with their harnesses.
+Measure whether agent workflows achieve their declared outcomes under recorded execution conditions, whether online or offline. Use that evidence to compare model and harness configurations, make useful workflows portable to local hardware, and improve their results over time.
 
 The working prototype provides the evaluation foundation: local MLX inference, configurable acceptance tasks, evaluator failure replay, and evidence reports. Full multistep tool execution, online reference capture, baseline comparison, and automated harness optimization are planned capabilities, not implemented claims.
 
@@ -19,11 +19,11 @@ The first release is a standalone, local companion to A1 Scout. It reads model f
 5. Inspect available machines, read the A1 model stash over SSH, and run the proof on a machine with sufficient resources.
 6. README, architecture, dataset provenance, demo script, and a draft submission description.
 
-## Acceptance criteria
+## Current release acceptance criteria
 
 - An absent model or tokenizer fails with actionable diagnostics before inference.
-- A runtime without functioning OS enforcement cannot produce a verified result.
-- Only a real model run with all checks passing is marked verified.
+- A runtime without functioning OS enforcement cannot produce a **Verified offline** result.
+- Only a real model run with all checks passing earns the current **Verified offline** label.
 - Unsupported answers, invented citations, incorrect expected facts, and failed abstention fail quality checks.
 - Reports include file hashes, machine/runtime identity, network probes, actual outputs, checks, timings, and limitations.
 - Live progress and exported reports agree; concurrent runs are refused; subprocesses time out cleanly.
@@ -53,11 +53,81 @@ The current release supports one machine per run, MLX text models, UTF-8 Markdow
 - Added failure replay: 32 agent-decision cases (4 accept / 28 reject), or 63 cases across all suites. Reports distinguish evaluator correctness from model accuracy. Tests inject always-accept and always-reject evaluators to confirm that both defects fail replay.
 - The local model's tool-selection role is explicitly described as the decision model in the submission and Loom narrative; proposed actions remain unexecuted.
 
+## Outcome measurement across online and offline execution
+
+**Define success once. Verify the result. Record the conditions and resources used to achieve it.**
+
+The primary measurement unit is a logical workflow request with a declared outcome. A verified outcome plays the role of a conversion in a measurement plan. Network access, model, harness configuration, hardware, and available tools are dimensions of the run. A frontier model is another measured configuration; its output is not the definition of success.
+
+This is the measurement design for the next implementation. Today's report records task outputs and checks, timings, file hashes, runtime versions, machine information, and network-denial evidence. It does not yet record completed multistep artifacts, actual tool execution, online comparisons, spend, peak memory, or human interventions.
+
+### Outcome contract
+
+Before comparing configurations, version the following for each workflow:
+
+- The requested result, required final artifacts or external effects, and evidence that establishes delivery.
+- Acceptance criteria for artifact correctness, source support, tool effects, and required behavior; critical criteria are gates, not points that can be averaged away.
+- The input snapshot, data freshness requirements, permitted capabilities, and resource limits.
+- Whether a case tests completed work or a boundary behavior such as clarification or refusal.
+- The evaluation cohort, development/held-out split, attempt policy, and primary metric denominators.
+
+Keep three observations separate: whether execution finished, whether the requested work was delivered, and whether behavior met the acceptance criteria. Correctly asking for a missing filename can pass a clarification test while the bundle-verification request remains unresolved. Likewise, refusing an unavailable upload may be correct behavior, but a queued or refused upload is not a completed upload. The current ten-task acceptance score includes such boundary tests and is not an end-to-end completion rate.
+
+### Measurement record
+
+| Dimension | Record | Interpretation |
+| --- | --- | --- |
+| Identity | Workflow/case revision, logical request ID, run ID, attempt ID, configuration ID | Link retries to one request and compare equivalent cases. |
+| Evidence origin | Measured model run, evaluator fixture, or estimate; native/imported provenance and original report identity | Keep real execution, evaluator self-tests, and predictions distinguishable throughout the interface and exports. |
+| Delivery | Completed, needs clarification, unsupported, blocked, failed, or unknown; required artifact/effect evidence | Count completion only when the declared result is verified. A missing result stays unresolved. |
+| Acceptance | Pass/fail/undetermined for each criterion, evaluator revision, relevant source/tool evidence | Report artifact quality and appropriate boundary behavior separately from delivery. |
+| Execution conditions | Compute location, configured network policy, observed network evidence, tools, source snapshots, model/harness versions | Local compute and offline execution are separate dimensions. A local model can run with networking enabled. |
+| Efficiency | End-to-end time, attempt and tool counts, human interventions, observed tokens/memory, cost and accounting scope | Missing measurements remain unknown. Label estimates and their assumptions. |
+
+For mixed or fallback runs, record conditions per step and retain the overall sequence. A run that used an online service before switching to local execution cannot be labeled entirely offline. Continue enforcing network denial for steps declared forced offline. Environment evidence complements the outcome verdict; neither substitutes for the other.
+
+### Metrics and denominators
+
+- **Verified completion rate:** unique requests with the required result verified / all requests assigned to the completion cohort. Keep blocked, timed-out, failed, and unresolved requests in the denominator. Declare any eligibility exclusions before running and report them. Report clarification/refusal test acceptance separately.
+- **Acceptance by criterion:** passing cases / assigned cases for each applicable criterion, with failures and undetermined results visible. Preserve sample counts and critical failures alongside aggregate scores.
+- **Time to verified completion:** elapsed time from the first attempt to the accepted result, including retries. Report unresolved/time-limited runs and success rate alongside latency; separately record waiting and active time when available.
+- **Cost per verified completion:** total recorded cost for all attempts in the cohort, including failed attempts and retries / unique verified completions. With no verified completions, the ratio is undefined. Incomplete cost coverage cannot be presented as a complete cost figure. Local hardware and energy estimates must be labeled separately from measured API spend; no API bill does not imply zero total cost.
+- **Operational burden:** attempts and tool calls per request, recovery rate on declared failure cases, and human intervention rate. Record both request-level and attempt-level results so retries cannot inflate success counts.
+
+Stage outcomes provide diagnostic context for these metrics. Readiness, isolation, generation, and validation events help locate a failure; stage progress alone does not establish the user's outcome. Avoid a single blended score that can hide failed delivery behind low cost or fast execution.
+
+### Fair comparisons and improvement claims
+
+Use paired workflow cases, the same input snapshots and acceptance criteria, declared budgets, and versioned model/harness/tool configurations. Evaluate online references with the same outcome checks as local candidates. Record data or capability differences that prevent a like-for-like comparison.
+
+Repeat trials, record cold/warm conditions, and interleave or randomize comparable runs where practical. Show sample sizes and uncertainty alongside observed differences. A controlled configuration change can support attributing improvement to that change; a before/after score with several changes does not isolate their individual effects. Keep the evaluation rubric frozen and reserve held-out cases for promotion decisions.
+
+The first comparison view should show completion, acceptance, latency, resource use, and conditions side by side. Unknown measurements remain visible. No online reference has been selected or benchmarked yet.
+
+### Bench interface direction
+
+Use the user's A1 Bench screenshots from October 29 as the visual reference: charcoal surfaces, yellow selection and action accents, IBM Plex typography, compact pills, job cards, a configuration panel, a dense comparison table, and individual acceptance checks. Preserve the working companion's existing Scout styling while adapting the information hierarchy to outcome measurement.
+
+The main product question is: **Which configuration delivers the requested outcome, under which conditions, and what does it take?**
+
+| Bench pattern | Measurement dashboard application |
+| --- | --- |
+| Job cards | Select the workflow or task suite. Display task count and real-run count with distinct labels. Start with the three implemented suites; complete workflow cards follow actual execution support. |
+| Measured / Simulate navigation | Distinguish real model results, evaluator checks, and any future estimates. The current Harness check is an evaluator check. A simulation is a separate future capability. |
+| Parts, machine, and scenario controls | Select model/harness configuration, hardware, input cohort, budgets, and execution policy. Record the exact selected configuration with the run. |
+| Comparison table | Compare equivalent workflow revisions using verified completions, acceptance results, sample counts, end-to-end time, measured resources, and cost coverage. Include model/harness identity, compute location, and observed network conditions. |
+| Test checklist | Open the criteria that passed, failed, or remained unmeasured. Link each result to the input, actual output, expected requirement, and relevant evidence. |
+| Stack / execution diagram | Inspect the stages and actual tool sequence for a selected run, including failures, retries, clarification, and fallback boundaries when implemented. |
+
+The drill-down path is **workflow → configuration comparison → individual run → stage/task checks → source, tool result, or final artifact**. Comparisons should show both outcome and efficiency rather than hiding tradeoffs in a single score. The screenshots' weighted model scores are design references, not an adopted definition of workflow completion. Keep fixtures and estimates out of measured rankings; keep missing values visible as unmeasured rather than zero.
+
+Current implementation remains the local task dashboard with per-task evidence and stage status. The comparison view, expanded stage drill-down, complete workflow accounting, and online execution controls described here are planned. Do not copy screenshot metrics into run evidence.
+
 ## Workflow portability and continuous improvement
 
 ### Product promise and terminology
 
-**Take a workflow that works online, make its dependencies available locally, then measure and improve the offline result.**
+**Apply the same outcome standard to a workflow online and offline, then use the evidence to improve either configuration.** Portability requires making the necessary dependencies available locally; successful completion is established by the outcome contract above.
 
 An agent harness is the execution system around a model: instructions, skills, context assembly, retrieval, available tools, action validation, state, retries, stopping rules, and budgets. Optimizing that harness is distinct from fine-tuning model weights. Both can improve a local system; neither establishes parity without measurement.
 
@@ -98,7 +168,7 @@ Evaluate the reference outputs too: they are comparison evidence, not automatic 
 
 For full workflows, score completion, artifact correctness, source support, invalid actions, appropriate clarification/abstention, and recovery from tool failures. Allow multiple valid execution paths; matching a reference's exact tool sequence is not the objective. The current exact tool-call tests remain useful component tests.
 
-Report quality alongside latency distributions, memory, model/token/tool budgets, and online spend where observed. Compare paired cases and repeat trials to expose variability. Predeclare the acceptable quality gap and resource limits for each workflow. A claim of comparable performance names the workflow, test-set revision, reference version, hardware, sample size, and observed uncertainty. The present ten synthetic tasks do not establish frontier parity.
+Report completion and quality alongside latency distributions, memory, model/token/tool budgets, and cost where observed, using the denominators defined above. Compare paired cases and repeat trials to expose variability. Predeclare the acceptable quality gap and resource limits for each workflow. A claim of comparable performance names the workflow, test-set revision, reference version, hardware, sample size, and observed uncertainty. The present ten synthetic tasks do not establish frontier parity.
 
 ### Tuning and promotion loop
 
@@ -121,8 +191,8 @@ Execution mode is explicit: online, forced offline, or a configured fallback mod
 
 | Milestone | Deliverable | Evidence required |
 | --- | --- | --- |
-| 1. Execute one portable workflow | A bounded agent loop with local document lookup and checksum tools, state, budgets, and validated actions | Real final artifact and tool results under OS network denial; missing-input and tool-failure cases |
-| 2. Compare with an online reference | Versioned reference-report import and paired outcome comparison | Provenance, equivalent input/task revisions, and separately labeled capability differences |
+| 1. Execute and measure one portable workflow | A versioned outcome contract and bounded agent loop with local document lookup and checksum tools, state, budgets, and validated actions | Real final artifact and tool results under OS network denial; delivery distinguished from correct clarification/refusal; missing-input and tool-failure cases |
+| 2. Compare online and offline configurations | Versioned reference-report import and paired outcome comparison, with completion, quality, time, and resource accounting | The same acceptance criteria, request/attempt identities, provenance, equivalent input/task revisions, and visible capability or measurement gaps |
 | 3. Tune configurations | Versioned prompt/skill/retrieval/model configurations with development and held-out evaluations | Candidate changes improve selected workflows without degrading required behavior |
 | 4. Train only where justified | Optional adapter/weight fine-tuning on verified training examples | Improvement persists on held-out cases, resource costs are recorded, and rollback remains available |
 

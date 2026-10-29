@@ -1,6 +1,6 @@
 # Loom script — Scout Offline Proof
 
-**Video title:** Scout Offline Proof: a foundation for taking agent workflows offline
+**Video title:** Scout Offline Proof: measuring agent outcomes, starting offline
 
 **Target length:** 4:00–4:30
 
@@ -20,9 +20,9 @@
 
 **Say:**
 
-“Online agent workflows can research documents, extract records, and decide which tools to use. I want to bring suitable workflows onto the models stored on this A1 drive, so useful work can continue when connectivity disappears.
+“I come from measurement marketing, where defining success is essential. I want the same discipline for agent workflows: did they achieve the requested outcome, and what evidence supports it, whether they ran online or offline?
 
-Scout Offline Proof is the evaluation foundation. It checks what this local setup can do with network access denied, and keeps evidence of the results.”
+Scout Offline Proof starts with local AI on this A1 drive. It tests tasks with network access denied and records the results.”
 
 ## 0:30–1:00 — What the tool tests
 
@@ -94,9 +94,9 @@ The restriction applies to the inference process and its descendants. My dashboa
 
 The next milestone is a complete local workflow: read a field report, extract its details, run a checksum tool, and produce a sourced result.
 
-Then we can compare the same workflow against an online frontier model and its harness. We'll tune prompts, skills, retrieval, tools, and model choice against fixed criteria, with separate held-out tests.
+Then we'll evaluate online and offline configurations against the same outcome requirements. A frontier model and its harness will face those checks too. We'll compare completion, quality, time, and cost, then tune configurations using fixed criteria and held-out tests.
 
-That comparison and tuning loop is planned. The target is comparable results on defined workflows, measured over time. Today, we have working offline acceptance tests and evaluator checks to build on.”
+That comparison and tuning loop is planned. Today, we have working offline acceptance tests and evaluator checks to build on. The goal is verified outcomes with evidence of what it took to achieve them.”
 
 ## Recording notes
 

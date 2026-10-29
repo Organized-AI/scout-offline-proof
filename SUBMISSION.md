@@ -1,6 +1,6 @@
 # Scout Offline Proof
 
-**Tagline:** Downloaded isn't the same as ready.
+**Tagline:** Measure the result. Record the conditions.
 
 **Track:** Antler — Agents / agent tooling
 
@@ -12,7 +12,7 @@
 
 ## Submission write-up
 
-Agent workflows are becoming useful online, but unreliable connectivity can put their tools and data out of reach. Our goal is to make suitable workflows portable: prepare local dependencies, complete the work offline, and measure quality against an online reference.
+Our goal is measurable agent outcomes across online and offline execution. Define success once, verify the actual result, and record the time, resources, and conditions required to achieve it.
 
 Scout Offline Proof is the evaluation foundation for that goal, built as an independent companion to A1 Scout. It checks a local MLX setup, fingerprints inputs, and runs ten synthetic acceptance tasks under macOS network denial. Four live probes verify enforcement before inference.
 
@@ -22,11 +22,11 @@ A separate Harness check replays known valid and invalid decisions to test the e
 
 In a measured run, Qwen3 4B loaded from A1 passed all ten tasks in 20.8 seconds on an M4 Mac mini, with all four denial probes passing.
 
-Next comes one complete local workflow, then paired evaluation against a versioned reference using a frontier model and its harness. We plan to tune prompts, skills, retrieval, tools, and model choice while keeping acceptance criteria fixed and testing held-out cases. Weight fine-tuning may follow. No frontier comparison has been run; these narrow results establish neither general agent reliability nor parity.
+Next comes a complete local workflow and a shared outcome contract for comparing online and offline runs. Both will be evaluated against the same requirements, with completion, quality, latency, and cost reported separately. We plan to tune prompts, skills, retrieval, tools, and model choice using fixed criteria and held-out cases. Online comparisons and automated tuning remain planned; current results do not establish frontier parity.
 
 ## Short pitch
 
-Scout Offline Proof provides the evaluation foundation for taking online agent workflows offline. It tests local answers, extraction, and tool decisions under OS-enforced network denial and exports inspectable evidence. The roadmap is complete local execution, then measured improvement against online references.
+Scout Offline Proof tests local answers, extraction, and tool decisions under OS-enforced network denial and exports inspectable evidence. It is the first step toward measuring complete workflow outcomes against a shared standard online and offline, then improving configurations based on verified results.
 
 ## Why this fits the hackathon
 

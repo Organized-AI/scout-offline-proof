@@ -1,10 +1,10 @@
 # Scout Offline Proof
 
-**A model on disk is a starting point. A completed task with network access denied is evidence.**
+**Measure the result. Record the conditions.**
 
 A standalone local companion to A1 Scout, built during the October 2026 AITX / MLOps hackathon. It checks a local MLX setup, runs configurable acceptance tasks under macOS network denial, validates the outputs, and exports an evidence report.
 
-The longer-term goal is to carry known online agent workflows onto local hardware and improve their offline results against measured results from frontier models with their harnesses. The current release supplies the evaluation foundation. Full tool execution, reference capture/comparison, automatic fallback, and tuning automation are planned in [PLAN.md](PLAN.md#workflow-portability-and-continuous-improvement); they are not implemented yet.
+The longer-term goal is to measure workflow outcomes against the same requirements online and offline, make suitable workflows portable, and improve model and harness configurations using that evidence. The current release supplies the offline evaluation foundation. Full tool execution, online reference capture/comparison, automatic fallback, and tuning automation are planned in [PLAN.md](PLAN.md#workflow-portability-and-continuous-improvement); they are not implemented yet.
 
 ## Run the dashboard
 
@@ -75,6 +75,14 @@ In the tool-selection suite, the local language model acts as a decision model: 
 An agent execution harness also controls skills, context, retrieval, tool execution, state, retries, and budgets. The current **Harness check** validates the evaluator; it does not train a model or run that full agent loop. The planned tuning loop changes the model/harness configuration while holding the evaluation criteria fixed, then checks improvement on separate held-out tasks. Weight fine-tuning is an optional later step.
 
 The measurable target is comparable performance on specified workflows and resource budgets. No comparison with a frontier model has been run, and passing the bundled tasks does not establish frontier parity. A workflow requiring fresh remote data or a remote side effect needs an explicit offline adaptation or an incomplete result.
+
+### Measure delivery and behavior separately
+
+The planned measurement model defines a required outcome once, then evaluates each online or offline configuration against it. Execution conditions are recorded alongside completion, acceptance, time, and resource use. Both reference and candidate outputs must pass the same outcome checks.
+
+Correct clarification or refusal can pass a behavior test while leaving the requested work unfinished. The current ten-task score includes these boundary cases; it is not a rate of completed multistep workflows. Future completion metrics will count unique requests, retain failed or blocked requests in the denominator, and include retries in time and cost accounting. Unknown costs remain unknown, and local operating costs require an explicit accounting scope.
+
+Current reports contain outputs, checks, timings, runtime and machine details, hashes, and network evidence. Complete workflow artifacts, actual tool execution, spend, peak memory, human interventions, and online comparisons are not yet measured. See the [measurement contract and metric definitions](PLAN.md#outcome-measurement-across-online-and-offline-execution).
 
 ## Configure your own tasks
 
