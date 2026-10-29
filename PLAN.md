@@ -30,7 +30,7 @@ The first release is a standalone, local companion to A1 Scout. It reads model f
 
 ## Scope limits
 
-One machine per run, MLX text models, UTF-8 Markdown/text documents, one document-Q&A workflow. No model downloads during proof, model training, cloud deployment, autonomous dependency installation, or native Mac UI in this release. An OS-denied connection is evidence for the subprocess and its descendants, not a claim that the entire machine is air-gapped. Passing this small task bank is not a general model-quality guarantee.
+One machine per run, MLX text models, UTF-8 Markdown/text documents, and declarative task suites. No model downloads during proof, model training, cloud deployment, autonomous dependency installation, or native Mac UI in this release. Tool selections are validated without executing the proposed calls. An OS-denied connection is evidence for the subprocess and its descendants, not a claim that the entire machine is air-gapped. Passing these task suites is not a general model-quality guarantee.
 
 ## Build outcome
 
@@ -40,3 +40,11 @@ One machine per run, MLX text models, UTF-8 Markdown/text documents, one documen
 - Copied the existing Qwen3-1.7B-4bit model from the A1 into this checkout's ignored `.proof/models` directory. Installed a separate local MLX virtual environment; no model was downloaded from a cloud service.
 - Actual inference ran on the local M4 Mac mini with 16 GB RAM. First run: 12.21 seconds, 3/3 tasks passed, all four OS-denial probes passed. A subsequent dashboard run completed in 5.51 seconds with the same pass results. These are observed run timings, not promised performance.
 - The native Mac app and Scout's private Worker remain independent. This local companion needs neither service to run.
+
+## October 29 expansion
+
+- Added three configurable suites: grounded Q&A (3 tasks), structured extraction (3), and agent tool selection (4). Custom JSON files supply tasks, expectations, fixtures, token budgets, and retrieval limits.
+- Added wrong-answer and malformed-JSON fixture scenarios to verify that the evaluator rejects faults. Harness runs remain distinct from real model runs.
+- Matched the original Scout visual language: charcoal and yellow, compact cards, pill controls, and locally served IBM Plex fonts. Added a light theme and persisted browser settings.
+- A1 is now mounted directly on the M4 Mac at `/Volumes/A1`. Qwen3-4B-Instruct-2507-4bit passed all ten tasks in 21.77 seconds with four OS-denial probes passing. Timings describe this observed run only.
+- Agent tool selection was prioritized because the [Antler Agents track and event rubric](https://common-scooter-829.notion.site/AITX-MLOps-World-Community-Hackathon-Austin-Tech-Week-4021e636288e81e08278fd9a977d7639) emphasize useful agent tooling, complete working systems, technical depth, and performance. This is a product choice based on the rubric, not a claim of organizer endorsement.

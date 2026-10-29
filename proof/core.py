@@ -17,12 +17,14 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
+from .suites import HARNESS_CASES, catalog, evaluate_structured, load_suite, parse_json, prepare_task, summary
+
 ROOT = Path(__file__).resolve().parents[1]
 SANDBOX = "/usr/bin/sandbox-exec"
 POLICY = "(version 1)(allow default)(deny network*)"
 STAGES = [("preflight", "Check local setup"), ("manifest", "Fingerprint the inputs"),
-          ("isolation", "Block and test network access"), ("workflow", "Run document questions"),
-          ("quality", "Verify answers and sources")]
+          ("isolation", "Block and test network access"), ("workflow", "Run acceptance tasks"),
+          ("quality", "Verify outputs and contracts")]
 
 
 def now():
@@ -65,7 +67,7 @@ def parse_answer(output):
         output = output.split("</think>")[-1].strip()
     if output.startswith("```"):
         output = re.sub(r"^```(?:json)?\s*|\s*```$", "", output).strip()
-    value = json.loads(output)
+    value = parse_json(output)
     if not isinstance(value, dict) or not isinstance(value.get("answer"), str):
         raise ValueError("Expected a JSON object with an answer string.")
     if set(value) != {"answer", "source", "quote"}:
@@ -78,6 +80,8 @@ def normalize(text):
 
 
 def evaluate(task, output, retrieved):
+    if task.get("kind", "grounded_qa") != "grounded_qa":
+        return evaluate_structured(task, output)
     checks = []
     parsed = None
     try:
@@ -131,12 +135,15 @@ def discover():
             if r.stdout.strip() == "True":
                 runtime = str(p)
                 break
-    return {"machine": machine(), "models": models, "defaults": {"model": models[0]["path"] if models else "",
-            "python": runtime, "documents": str(ROOT / "data/fieldkit"), "mode": "mlx"}}
+    return {"machine": machine(), "models": models, "suites": catalog(),
+            "defaults": {"model": models[0]["path"] if models else "", "python": runtime,
+                         "documents": str(ROOT / "data/fieldkit"), "mode": "mlx",
+                         "suite": "fieldkit-qa", "harness_case": "valid"}}
 
 
 def model_files(model):
-    files = [p for p in model.iterdir() if p.is_file() and (p.suffix in {".json", ".safetensors", ".jinja", ".txt", ".model"})]
+    files = [p for p in model.iterdir() if p.is_file() and not p.name.startswith(".")
+             and (p.suffix in {".json", ".safetensors", ".jinja", ".txt", ".model"})]
     return sorted(files)
 
 
@@ -148,9 +155,20 @@ def preflight(config):
         "macOS sandbox-exec with a network-deny policy", "Run this release on macOS with sandbox-exec available.")
     python = Path(config["python"]).expanduser().absolute()
     add("Python interpreter", python.is_file() and os.access(python, os.X_OK), str(python), "Choose an executable Python 3.10+ interpreter.")
+    suite = None
     try:
-        docs = read_corpus(config["documents"])
-        add("Local documents", True, f"{len(docs)} UTF-8 documents; no remote sources")
+        suite = load_suite(config.get("suite", "fieldkit-qa"))
+        add("Task suite", True, f"{suite['name']} · {len(suite['tasks'])} tasks")
+    except (OSError, ValueError, TypeError, RecursionError) as exc:
+        add("Task suite", False, str(exc), "Choose a bundled suite or a valid local suite JSON file. See README for its format.")
+    add("Harness scenario", config.get("harness_case", "valid") in HARNESS_CASES,
+        config.get("harness_case", "valid"), "Choose valid, wrong-answer, or malformed-json.")
+    try:
+        if suite and any(t["kind"] == "grounded_qa" for t in suite["tasks"]):
+            docs = read_corpus(config["documents"])
+            add("Local documents", True, f"{len(docs)} UTF-8 documents; no remote sources")
+        elif suite:
+            add("Task inputs", True, "Text inputs are bundled in the suite; no document directory is required.")
     except (OSError, ValueError) as exc:
         add("Local documents", False, str(exc), "Select a folder containing readable .md or .txt documents.")
     if config["mode"] == "mlx":
@@ -187,15 +205,16 @@ def preflight(config):
 
 def run(config, publish=lambda r: None, timeout=300):
     """The coordinator is online; the actual workflow runs entirely in a denied subprocess."""
-    config = {**config, "mode": config.get("mode", "mlx")}
+    config = {"suite": "fieldkit-qa", "harness_case": "valid", **config, "mode": config.get("mode", "mlx")}
     if config["mode"] not in {"mlx", "harness"}:
         raise ValueError("Unknown runtime mode")
-    report = {"schema_version": 1, "id": str(uuid.uuid4()), "started_at": now(), "status": "running",
+    report = {"schema_version": 2, "id": str(uuid.uuid4()), "started_at": now(), "status": "running",
               "mode": config["mode"], "config": config, "machine": machine(), "checks": [], "answers": [],
               "network": {}, "inputs": {}, "stages": [{"id": k, "label": label, "status": "pending"} for k, label in STAGES],
               "limitations": ["Network denial covers the runner process and its descendants, not the entire Mac or the dashboard.",
-                "This is a three-question synthetic task bank. It does not certify general model accuracy.",
+                "Passing a configured task suite does not certify general model accuracy or agent safety.",
                 "Fact checks and exact quotations do not validate every possible extra claim in an answer.",
+                "Tool-call outputs are checked against contracts; proposed tools are not executed.",
                 "Input hashes identify this run's local files; this is not a signed third-party attestation."]}
     started = time.monotonic()
     current = "preflight"
@@ -216,13 +235,18 @@ def run(config, publish=lambda r: None, timeout=300):
         report["checks"] = preflight(config)
         if not all(c["passed"] for c in report["checks"]):
             raise ValueError("Setup needs attention. Resolve the failed checks, then run again.")
+        suite = load_suite(config["suite"])
+        report["suite"] = summary(suite)
+        report["generation"] = {"max_tokens": suite["max_tokens"], "temperature": 0, "seed": 0}
         stage("preflight", "passed")
         stage("manifest", "running")
-        corpus = read_corpus(config["documents"])
-        tasks = json.loads((ROOT / "data/tasks.json").read_text())
-        prepared = [{"id": t["id"], "question": t["question"], "documents": retrieve(t["question"], corpus)} for t in tasks]
+        tasks = suite["tasks"]
+        needs_corpus = any(t["kind"] == "grounded_qa" for t in tasks)
+        corpus = read_corpus(config["documents"]) if needs_corpus else []
+        prepared = [prepare_task(t, retrieve(t["question"], corpus, suite["retrieval_limit"]) if t["kind"] == "grounded_qa" else [], config["mode"]) for t in tasks]
         report["inputs"] = {"documents": [{k: d[k] for k in ["source", "sha256"]} for d in corpus],
-                            "task_bank_sha256": digest(ROOT / "data/tasks.json"),
+                            "suite_files": suite["files"],
+                            "task_bank_sha256": hashlib.sha256(json.dumps(tasks, sort_keys=True).encode()).hexdigest(),
                             "application": {p.name: digest(p) for p in sorted((ROOT / "proof").glob("*.py"))}, "model_files": []}
         fingerprints = []
         if config["mode"] == "mlx":
@@ -240,7 +264,8 @@ def run(config, publish=lambda r: None, timeout=300):
             with socket.create_connection(("127.0.0.1", port), timeout=2):
                 report["network"]["witness_reachable_before_sandbox"] = True
             payload = {"model": str(Path(config["model"]).expanduser().resolve()) if config["model"] else "",
-                       "mode": config["mode"], "witness_port": port, "tasks": prepared}
+                       "mode": config["mode"], "witness_port": port, "tasks": prepared,
+                       "max_tokens": suite["max_tokens"], "harness_case": config["harness_case"]}
             env = {k: os.environ[k] for k in ["PATH", "HOME", "TMPDIR", "LANG"] if k in os.environ}
             env.update(HF_HUB_OFFLINE="1", TRANSFORMERS_OFFLINE="1", HF_HUB_DISABLE_TELEMETRY="1", TOKENIZERS_PARALLELISM="false", PYTHONDONTWRITEBYTECODE="1")
             command = [SANDBOX, "-p", POLICY, str(Path(config["python"]).expanduser().absolute()), "-u", "-m", "proof.runner"]
@@ -288,9 +313,13 @@ def run(config, publish=lambda r: None, timeout=300):
                     report["runtime"] = event
                     emit()
                 elif kind == "answer":
+                    if event["id"] in {a["id"] for a in report["answers"]}:
+                        raise ValueError("Runner returned a duplicate task result.")
                     task = next(t for t in tasks if t["id"] == event["id"])
                     docs = next(t["documents"] for t in prepared if t["id"] == event["id"])
-                    report["answers"].append({"id": task["id"], "question": task["question"], "raw": event["output"],
+                    report["answers"].append({"id": task["id"], "kind": task["kind"], "suite_id": task["suite_id"],
+                                              "question": task["question"], "input": task.get("input"),
+                                              "expected": task["expected"], "raw": event["output"],
                                               "seconds": event["seconds"], "retrieved_sources": [d["source"] for d in docs],
                                               **evaluate(task, event["output"], docs)})
                     emit()
@@ -303,6 +332,10 @@ def run(config, publish=lambda r: None, timeout=300):
                 raise ValueError(f"Runner did not finish a complete enforced workflow (exit {code}). " + " ".join(tail))
         if any(p.stat().st_size != size or p.stat().st_mtime_ns != mtime for p, size, mtime in fingerprints):
             raise ValueError("Model files changed during the run; the evidence is invalid. Run again with stable files.")
+        if any(digest(f["path"]) != f["sha256"] for f in suite["files"]):
+            raise ValueError("Task suite changed during the run; run again with stable inputs.")
+        if needs_corpus and read_corpus(config["documents"]) != corpus:
+            raise ValueError("Documents changed during the run; run again with stable inputs.")
         stage("workflow", "passed")
         stage("quality", "running")
         quality = all(a["passed"] for a in report["answers"])

@@ -1,34 +1,105 @@
-# Three-minute Loom walkthrough
+# Loom script — Scout Offline Proof
 
-## Before recording
+**Video title:** Scout Offline Proof: testing local AI beyond Wi-Fi
 
-- Start `python3 -m proof serve` and open the dashboard.
-- Keep the selected model local and the correct Python interpreter configured.
-- Run the real workflow once to confirm this machine works. This is a functional rehearsal, not a substitute for the recorded run.
-- Never show secret configuration or unrelated client data. Everything in this corpus is synthetic.
+**Target length:** 4:00–4:30
 
-## 0:00–0:30 — the problem
+**Format:** Screen recording with optional face camera. Narration below is ready to read; screen actions are separate.
 
-“I keep local models on an external drive. But a file being downloaded doesn't tell me whether its tokenizer, runtime, and full workflow can actually run offline. Scout Offline Proof tests that claim.”
+## Set up before recording
 
-Show the model, machine, and bundled documents.
+1. Start `python3 -m proof serve` from this repository and open http://127.0.0.1:8741.
+2. Keep A1 connected. Select **All acceptance suites**, **Local model**, and **Qwen3-4B-Instruct-2507-4bit · A1**. Under Local paths, use this project's `.venv/bin/python` and bundled `data/fieldkit` documents.
+3. Rehearse a real run once. Confirm the actual result; do not assume it will always pass or take the same time. The measured reference run passed 10/10 in 20.84 seconds.
+4. Use a browser window around 1440 × 1000, the dark theme, and readable zoom. Start at the top of the dashboard. Keep the downloaded report and `data/suites/extraction.json` ready to show near the end.
+5. Use the synthetic bundled data throughout. Close unrelated tabs and notifications. The JSON report includes local paths and machine names; select the relevant sections when showing it.
 
-## 0:30–1:00 — show a real failure
+## 0:00–0:30 — The problem
 
-Open the advanced settings and change the model path to an explicitly nonexistent folder, such as `/nonexistent/offline-proof-demo-model`. Run the proof. Show the failed model/tokenizer/weights checks and remediation. No actual file needs to be removed.
+**On screen:** Show the A1 device briefly if convenient, then the dashboard and selected local model.
 
-Restore the existing model using the model dropdown.
+**Say:**
 
-## 1:00–2:15 — run the real proof
+“I keep local AI models on this A1 drive. But having a model downloaded doesn't tell me whether it can actually do useful work without internet access. The tokenizer might be missing, the runtime might fail, or the model might give an answer that looks convincing but is wrong.
 
-Click **Local model**, then **Run offline proof**. Explain the five stages while they progress. The runner probes a live local witness before loading the model. The OS blocks TCP and UDP connections from inside that process.
+I built Scout Offline Proof to test the whole workflow and keep evidence of what happened.”
 
-“The dashboard remains online. The inference subprocess has network access denied. Those are separate claims.”
+## 0:30–1:00 — What the tool tests
 
-Show the actual results. If a quality check fails, show the failure honestly and diagnose it; do not substitute a harness result.
+**On screen:** Open the task-suite dropdown. Point out the three suites and leave **All acceptance suites** selected.
 
-## 2:15–3:00 — inspect the evidence
+**Say:**
 
-Open a passing answer and its supporting quotation. Open the unknown-price question and show abstention. Show the four denied network probes, then export the JSON report with file hashes, actual output, and runtime versions.
+“There are ten tasks across three suites. Document Q&A checks answers against local sources. Structured extraction checks whether the model returns the right fields, values, and JSON types. Tool selection checks whether an agent chooses an allowed tool with the right arguments—and knows when to ask for missing information or decline an unsupported action.
 
-“This is a small, reproducible workflow proof, not a promise that every model response is correct. Next, teams can supply their own tasks and gate model updates on the workflows they actually need.”
+These are small, synthetic acceptance tests. You can supply your own tasks for the work your team actually needs.”
+
+## 1:00–1:35 — Show that the evaluator catches failures
+
+**On screen:** Click **Harness check**. Select **Wrong answers · should fail**. Click **Run harness check**. Show **Fixture errors detected**, **0/10**, and one failed check. Then select **Valid responses · should pass** for the next time harness mode is used.
+
+**Say:**
+
+“First, I want to know that the evaluator can catch mistakes. Harness mode feeds it fixed responses without loading a language model. Here I'm deliberately injecting wrong answers.
+
+It rejects them. I can inspect exactly which checks failed. There's also a malformed-JSON scenario. This is a test of the testing pipeline; it does not count as proof that a model works offline.”
+
+## 1:35–2:10 — Run real inference
+
+**On screen:** Switch to **Local model** and click **Run offline proof**. Keep the run stages visible while it executes.
+
+**Say:**
+
+“Now this is the real Qwen model, loaded directly from A1 and running on this Mac.
+
+The tool checks the setup and hashes the inputs. It then starts the inference process under an operating-system policy that denies network access. Four live connection probes have to confirm that restriction before the model is loaded.
+
+The model runs each task, and a separate evaluator checks the outputs. Expected answers are not included in the model's prompts.”
+
+**Timing:** The reference run took about 21 seconds. If your live run takes longer, let it finish; do not substitute the fixture results.
+
+## 2:10–3:10 — Explain the actual results
+
+**On screen:** Show the total and category scores. In Run evidence, open the retention answer; then select **missing value** and **unsupported action**. Open **Expected output** where useful.
+
+**Say, if the live run passes:**
+
+“This run passed all ten tasks. The category scores show where those results came from.
+
+For this document question, the answer is 72 hours. The evaluator checks the expected fact, the source filename, and whether the supporting quotation really appears in that source. There's also a question the documents cannot answer, where the model must abstain.
+
+In extraction, an absent owner stays null instead of becoming a made-up name. The suite also tests whether an instruction hidden in the input changes the extracted record.
+
+For the unsupported upload request, the model selects no action instead of inventing a tool. These tool calls are checked against contracts; this demo does not execute the proposed actions.”
+
+**If a live task fails, use instead:** “The run completed, but this task failed its acceptance check. Here is the actual output and the expected result. This is the kind of problem the tool is designed to expose before deployment.” Then continue with the evidence.
+
+## 3:10–3:40 — Define the offline claim
+
+**On screen:** Scroll to the four network probes.
+
+**Say:**
+
+“All four network probes were denied. The local test endpoint was reachable before sandboxing, so a missing internet connection alone can't explain the result.
+
+The restriction applies to the inference process and its descendants. My dashboard and the rest of the Mac remain online. The evidence is that these particular tasks completed with that process's network access blocked—not that the entire computer is air-gapped or every future answer will be correct.”
+
+## 3:40–4:15 — Evidence, configuration, and value
+
+**On screen:** Click **Export report**. Show the suite name, an answer with its checks, and the file hashes. Briefly show `data/suites/extraction.json` or expand **Configure your own tasks**.
+
+**Say:**
+
+“The report keeps the actual outputs, expected values, checks, timings, runtime versions, and input hashes. That gives us something concrete to inspect when a setup or model changes.
+
+To adapt this, copy a suite JSON file and change the inputs and acceptance criteria. The same harness can check your fixtures before you run them against a real model.
+
+Scout Offline Proof is agent tooling for developers who need dependable local AI. It turns ‘the model is on the drive’ into a much more useful question: can this setup finish the work, with evidence we can inspect?”
+
+## Recording notes
+
+- Describe the score and timing that actually appear in your recording.
+- Keep “harness” and “real model” labels visible when switching modes.
+- The report is an unsigned local record, not independent certification.
+- Do not call this a fully autonomous agent or claim that its proposed tools were executed.
+- If you need to shorten the video, omit the custom-file preview and show only one extraction example.

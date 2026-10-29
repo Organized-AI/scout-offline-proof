@@ -67,6 +67,18 @@ class DashboardBoundaryTests(unittest.TestCase):
         self.assertEqual(cm.exception.code, 404)
         cm.exception.close()
 
+    def test_custom_suite_failure_and_suite_counts_in_preflight(self):
+        for suite, count in [("all", 10), ("extraction", 3), ("/nonexistent/suite.json", None)]:
+            config = {**self.state["info"]["defaults"], "mode": "harness", "suite": suite}
+            req = Request(self.base + "/api/preflight", data=json.dumps(config).encode(), method="POST", headers={"X-Scout-Token": self.state["token"]})
+            with urlopen(req) as response:
+                result = json.load(response)
+            if count:
+                self.assertEqual(result["suite"]["task_count"], count)
+            else:
+                self.assertIsNone(result["suite"])
+                self.assertFalse(next(c["passed"] for c in result["checks"] if c["label"] == "Task suite"))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -87,7 +87,7 @@ def serve(port=8741):
             if path == "/api/state":
                 with state.lock:
                     return self.send({"token": state.token, "info": state.info, "active": state.active,
-                                      "report": state.report, "history": [{k:r.get(k) for k in ["id","status","mode","started_at","elapsed_s"]} for r in state.history]})
+                                      "report": state.report, "history": [{k:r.get(k) for k in ["id","status","mode","started_at","elapsed_s","suite"]} for r in state.history]})
             if path == "/api/report":
                 with state.lock:
                     if not state.report:
@@ -95,6 +95,10 @@ def serve(port=8741):
                     return self.send(json.dumps(state.report, indent=2).encode(), extra={"Content-Disposition": 'attachment; filename="scout-offline-proof.json"'})
             assets = {"/": ("index.html", "text/html; charset=utf-8"), "/app.js": ("app.js", "text/javascript; charset=utf-8"),
                       "/style.css": ("style.css", "text/css; charset=utf-8"), "/favicon.svg": ("favicon.svg", "image/svg+xml")}
+            for family in ["mono", "sans"]:
+                for weight in [400, 600]:
+                    name = f"fonts/ibm-plex-{family}-{weight}.woff2"
+                    assets["/" + name] = (name, "font/woff2")
             if path in assets:
                 name, kind = assets[path]
                 return self.send((ROOT / "web" / name).read_bytes(), kind=kind)
@@ -119,7 +123,12 @@ def serve(port=8741):
                 if config["mode"] not in {"mlx", "harness"}:
                     raise ValueError("Choose MLX or harness mode")
                 if self.path == "/api/preflight":
-                    return self.send({"checks": preflight(config)})
+                    from .suites import load_suite, summary
+                    checks = preflight(config)
+                    suite = None
+                    if next((c["passed"] for c in checks if c["label"] == "Task suite"), False):
+                        suite = summary(load_suite(config["suite"]))
+                    return self.send({"checks": checks, "suite": suite})
                 if self.path == "/api/run":
                     if not state.start(config):
                         return self.send({"error": "A proof is already running"}, 409)

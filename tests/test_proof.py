@@ -10,12 +10,13 @@ from unittest.mock import patch
 
 from proof.core import ROOT, evaluate, parse_answer, preflight, read_corpus, retrieve, run
 from proof.runner import harness_answer, network_evidence
+from proof.suites import load_suite
 
 
 class QualityTests(unittest.TestCase):
     def setUp(self):
         self.corpus = read_corpus(ROOT / "data/fieldkit")
-        self.tasks = json.loads((ROOT / "data/tasks.json").read_text())
+        self.tasks = load_suite("fieldkit-qa")["tasks"]
 
     def check(self, task, output):
         return evaluate(task, json.dumps(output), retrieve(task["question"], self.corpus))

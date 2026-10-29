@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "id": "fieldkit-qa",
+  "name": "Grounded document Q&A",
+  "description": "Find two facts with exact source quotations, then abstain when the handbook does not contain the answer.",
+  "max_tokens": 200,
+  "retrieval_limit": 2,
+  "tasks": [
+    {
+      "id": "retention",
+      "kind": "grounded_qa",
+      "question": "How long does the offline upload buffer retain observations?",
+      "expected": ["72 hours"],
+      "source": "01-retention.md",
+      "answerable": true,
+      "fixture": {
+        "answer": "72 hours",
+        "source": "01-retention.md",
+        "quote": "The offline upload buffer retains observations for 72 hours."
+      }
+    },
+    {
+      "id": "integrity",
+      "kind": "grounded_qa",
+      "question": "Which checksum algorithm does FieldKit use to verify field bundles before import?",
+      "expected": ["SHA-256"],
+      "source": "02-integrity.md",
+      "answerable": true,
+      "fixture": {
+        "answer": "SHA-256",
+        "source": "02-integrity.md",
+        "quote": "FieldKit verifies every field bundle with a SHA-256 checksum before import."
+      }
+    },
+    {
+      "id": "unknown",
+      "kind": "grounded_qa",
+      "question": "What is FieldKit's monthly subscription price?",
+      "expected": [],
+      "source": null,
+      "answerable": false,
+      "fixture": {
+        "answer": "NOT_FOUND",
+        "source": null,
+        "quote": null
+      }
+    }
+  ]
+}
