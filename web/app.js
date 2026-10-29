@@ -106,13 +106,13 @@ function renderChecks(checks) {
 function renderSuite() {
   const s = suiteInfo;
   $("custom-suite").hidden = $("suite-select").value !== "";
-  $("task-count").textContent = s ? `${s.task_count} tasks` : "Not validated";
+  $("task-count").textContent = s
+    ? `${s.task_count} ${s.task_count === 1 ? "task" : "tasks"}`
+    : "Not validated";
   $("suite-description").textContent =
     s?.description ||
     "Choose a suite or enter a local JSON file, then check setup.";
-  $("suite-kinds").innerHTML = (s?.kinds || [])
-    .map((k) => `<span class="chip">${esc(kindNames[k] || k)}</span>`)
-    .join("");
+  proofExplorer.setSuite(s);
 }
 function renderMode() {
   for (const m of ["mlx", "harness"]) {
@@ -196,12 +196,7 @@ function render() {
     : mode === "harness"
       ? "Run harness check ↗"
       : "Run offline proof ↗";
-  $("stages").innerHTML = stages
-    .map(([id, label, description], i) => {
-      const status = r?.stages?.find((s) => s.id === id)?.status || "pending";
-      return `<div class="stage ${status}"><span class="stage-icon">${status === "passed" ? "✓" : status === "failed" ? "!" : String(i + 1).padStart(2, "0")}</span><div><strong>${label}</strong><p>${description}</p></div><span class="stage-state">${status === "pending" ? "" : status}</span></div>`;
-    })
-    .join("");
+  proofExplorer.updateReport(r);
   renderChecks(active && r?.checks?.length ? r.checks : checked);
   if (active) alertMessage("");
   else if (r?.error)
@@ -315,7 +310,11 @@ async function check() {
     renderChecks(checked);
     renderSuite();
   } catch (e) {
-    if (sequence === checkSequence) alertMessage(e.message);
+    if (sequence === checkSequence) {
+      suiteInfo = null;
+      renderSuite();
+      alertMessage(e.message);
+    }
   } finally {
     if (sequence === checkSequence) $("check").disabled = state.active || busy;
   }
@@ -336,6 +335,12 @@ $("suite-select").onchange = () => {
     state.info.suites.find((s) => s.id === $("suite-select").value) || null;
   renderSuite();
   check();
+};
+$("suite-path").oninput = () => {
+  ++checkSequence;
+  suiteInfo = null;
+  renderSuite();
+  $("check").disabled = state.active || busy;
 };
 $("model-select").onchange = () => {
   if ($("model-select").value) {
@@ -423,4 +428,12 @@ async function init() {
   await check();
   setInterval(poll, 1000);
 }
+proofExplorer.init(stages, (index) => {
+  selectedAnswer = index;
+  render();
+  $("evidence").scrollIntoView({ block: "start" });
+  $("evidence-content")
+    .querySelector(".answer-card.selected")
+    ?.focus({ preventScroll: true });
+});
 init();

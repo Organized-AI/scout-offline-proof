@@ -94,6 +94,7 @@ def serve(port=8741):
                         return self.send({"error": "No report yet"}, 404)
                     return self.send(json.dumps(state.report, indent=2).encode(), extra={"Content-Disposition": 'attachment; filename="scout-offline-proof.json"'})
             assets = {"/": ("index.html", "text/html; charset=utf-8"), "/app.js": ("app.js", "text/javascript; charset=utf-8"),
+                      "/explore.js": ("explore.js", "text/javascript; charset=utf-8"),
                       "/style.css": ("style.css", "text/css; charset=utf-8"), "/favicon.svg": ("favicon.svg", "image/svg+xml")}
             for family in ["mono", "sans"]:
                 for weight in [400, 600]:
@@ -123,11 +124,11 @@ def serve(port=8741):
                 if config["mode"] not in {"mlx", "harness"}:
                     raise ValueError("Choose MLX or harness mode")
                 if self.path == "/api/preflight":
-                    from .suites import load_suite, summary
+                    from .suites import describe, load_suite
                     checks = preflight(config)
                     suite = None
                     if next((c["passed"] for c in checks if c["label"] == "Task suite"), False):
-                        suite = summary(load_suite(config["suite"]))
+                        suite = describe(load_suite(config["suite"]))
                     return self.send({"checks": checks, "suite": suite})
                 if self.path == "/api/run":
                     if not state.start(config):

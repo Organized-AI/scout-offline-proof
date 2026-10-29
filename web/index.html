@@ -11,6 +11,7 @@
     />
     <link rel="icon" href="/favicon.svg" />
     <link rel="stylesheet" href="/style.css" />
+    <script src="/explore.js" defer></script>
     <script src="/app.js" defer></script>
   </head>
   <body>
@@ -96,7 +97,21 @@
               </p>
             </div>
             <p class="panel-description" id="suite-description"></p>
-            <div class="suite-kinds" id="suite-kinds"></div>
+            <div
+              class="suite-kinds"
+              id="suite-kinds"
+              role="group"
+              aria-label="Explore task families"
+            ></div>
+            <p class="hint" id="suite-explore-hint">
+              Select a task family to explore its requirements.
+            </p>
+            <section
+              id="suite-explorer"
+              class="suite-explorer"
+              aria-labelledby="suite-explorer-title"
+              hidden
+            ></section>
             <details class="suite-help">
               <summary>Configure your own tasks <span>+</span></summary>
               <p>
@@ -111,9 +126,11 @@
               </p>
             </details>
             <div class="section-label">RUN STAGES</div>
+            <p class="hint" id="stage-context"></p>
             <div id="stages" class="stages"></div>
             <p class="hint">
-              Each stage leaves a record in the exported report.
+              Select any stage to see what it establishes and inspect its
+              evidence.
             </p>
           </section>
           <section class="panel setup-panel" id="setup">

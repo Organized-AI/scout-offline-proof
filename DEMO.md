@@ -26,7 +26,7 @@ Scout Offline Proof starts with local AI on this A1 drive. It tests tasks with n
 
 ## 0:30–1:00 — What the tool tests
 
-**On screen:** Open the task-suite dropdown. Point out the three suites and leave **All acceptance suites** selected.
+**On screen:** Leave **All acceptance suites** selected. Click the **Tool selection** chip and expand **bundle check** to show its instruction, required result, and checks. Close the family details before continuing.
 
 **Say:**
 
@@ -76,7 +76,7 @@ For the unsupported upload request, the model selects no action instead of inven
 
 ## 3:05–3:35 — Define the offline claim
 
-**On screen:** Scroll to the four network probes.
+**On screen:** Expand **Block and test network access** under Run stages. Show its explanation and the recorded network probes. Point out that the stage evidence names the run it belongs to.
 
 **Say:**
 

@@ -2,12 +2,15 @@ import json
 import socket
 import subprocess
 import sys
+import tempfile
 import time
 import unittest
+from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 from proof.core import ROOT
+from proof.suites import load_suite, prepare_task
 
 
 class DashboardBoundaryTests(unittest.TestCase):
@@ -78,6 +81,42 @@ class DashboardBoundaryTests(unittest.TestCase):
             else:
                 self.assertIsNone(result["suite"])
                 self.assertFalse(next(c["passed"] for c in result["checks"] if c["label"] == "Task suite"))
+
+    def test_inspectable_contracts_keep_grading_data_out_of_model_payloads(self):
+        config = {**self.state["info"]["defaults"], "mode": "harness", "suite": "all"}
+        req = Request(self.base + "/api/preflight", data=json.dumps(config).encode(), method="POST", headers={"X-Scout-Token": self.state["token"]})
+        with urlopen(req) as response:
+            suite = json.load(response)["suite"]
+        original = load_suite("all")
+        self.assertEqual(suite["files"], original["files"])
+        self.assertEqual(len(suite["tasks"]), 10)
+        for shown, source in zip(suite["tasks"], original["tasks"]):
+            self.assertEqual(shown["expected"], source["expected"])
+            self.assertEqual(shown["question"], source["question"])
+            self.assertNotIn("fixture", shown)
+            payload = prepare_task(shown, [], "mlx")
+            for key in ("expected", "fixture", "source", "answerable"):
+                self.assertNotIn(key, payload)
+
+    def test_custom_task_inspection_returns_current_definition_and_revision(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "suite.json"
+            definition = load_suite("extraction")
+            definition["id"] = "custom-inspection"
+            definition["tasks"] = definition["tasks"][:1]
+            config = {**self.state["info"]["defaults"], "mode": "harness", "suite": str(path)}
+            versions = []
+            for value in ["CUSTOM-1", "CUSTOM-2"]:
+                definition["tasks"][0]["expected"]["bundle_id"] = value
+                path.write_text(json.dumps(definition))
+                req = Request(self.base + "/api/preflight", data=json.dumps(config).encode(), method="POST", headers={"X-Scout-Token": self.state["token"]})
+                with urlopen(req) as response:
+                    suite = json.load(response)["suite"]
+                self.assertEqual(suite["id"], "custom-inspection")
+                self.assertEqual(len(suite["tasks"]), 1)
+                self.assertEqual(suite["tasks"][0]["expected"]["bundle_id"], value)
+                versions.append(suite["files"][0]["sha256"])
+            self.assertNotEqual(*versions)
 
 
 if __name__ == "__main__":

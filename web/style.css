@@ -367,7 +367,7 @@ summary {
 summary::-webkit-details-marker {
   display: none;
 }
-details[open] summary > span {
+details[open] > summary > span:last-child {
   transform: rotate(45deg);
 }
 .suite-help {
@@ -385,7 +385,7 @@ details[open] summary > span {
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  margin: 0 0 19px;
+  margin: 0;
 }
 .stage-icon {
   width: 27px;
@@ -425,6 +425,204 @@ details[open] summary > span {
   color: var(--brand);
   border-color: var(--brand);
   animation: pulse 1.4s infinite;
+}
+.suite-kind {
+  min-height: 36px;
+  text-align: left;
+}
+.suite-kind:hover,
+.suite-kind[aria-expanded="true"] {
+  border-color: var(--brand);
+  background: var(--bg);
+}
+.suite-kind[aria-expanded="true"] {
+  box-shadow: inset 0 -2px var(--brand);
+}
+.suite-kind > span {
+  margin-left: 5px;
+}
+.suite-explorer {
+  border: 1px solid var(--line);
+  border-top: 2px solid var(--brand);
+  border-radius: 8px;
+  background: var(--bg);
+  padding: 16px;
+  margin-top: 14px;
+}
+.drill-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.drill-heading h3 {
+  margin: 4px 0 0;
+  font: 500 16px/1.5 var(--mono);
+}
+.drill-close {
+  flex-shrink: 0;
+}
+.drill-lead {
+  font-size: 14px;
+  margin: 14px 0 8px;
+}
+.drill-text,
+.drill-list,
+.drill-note {
+  font-size: 12px;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+.drill-text {
+  color: var(--muted);
+}
+.drill-list {
+  padding-left: 19px;
+  margin: 8px 0 14px;
+}
+.drill-list li + li {
+  margin-top: 5px;
+}
+.drill-note {
+  border-left: 2px solid var(--brand);
+  padding-left: 12px;
+  margin: 16px 0;
+}
+.task-disclosure {
+  border-top: 1px solid var(--line);
+  margin: 0;
+}
+.task-disclosure > summary {
+  padding: 13px 0;
+  color: var(--ink);
+}
+.task-disclosure > summary strong {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.task-disclosure > summary > span {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.drill-body {
+  padding-bottom: 16px;
+}
+.drill-facts {
+  margin: 12px 0;
+}
+.drill-facts > div {
+  display: grid;
+  grid-template-columns: minmax(110px, 1fr) minmax(0, 1.7fr);
+  gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+}
+.drill-facts dt {
+  color: var(--muted);
+}
+.drill-facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.stage-disclosure {
+  border-bottom: 1px solid var(--line);
+  margin: 0;
+}
+.stage-disclosure > summary {
+  padding: 13px 0;
+  color: var(--ink);
+  align-items: center;
+}
+.stage-disclosure > summary:hover strong,
+.stage-disclosure[open] > summary strong {
+  color: var(--accent);
+}
+.stage-title {
+  min-width: 0;
+}
+.stage-expand {
+  color: var(--accent);
+  font: 16px var(--mono);
+  flex-shrink: 0;
+}
+.stage-detail {
+  padding: 0 0 16px 39px;
+}
+.stage-evidence {
+  margin-top: 18px;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+.drill-check {
+  padding: 7px 0;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.drill-check strong {
+  font-weight: 500;
+  color: var(--good);
+}
+.drill-check p {
+  margin: 4px 0;
+  color: var(--muted);
+}
+.drill-check.bad strong,
+.drill-error,
+.drill-result.bad strong {
+  color: var(--bad);
+}
+.drill-error {
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.drill-results {
+  max-height: 300px;
+  overflow: auto;
+  margin: 12px 0;
+}
+.drill-result {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  padding: 10px 4px;
+  color: var(--ink);
+  background: transparent;
+  font: 11px/1.6 var(--mono);
+}
+.drill-result > span {
+  overflow-wrap: anywhere;
+}
+.drill-result strong {
+  color: var(--good);
+  font-weight: 400;
+  flex-shrink: 0;
+}
+.drill-result:hover {
+  background: var(--chip);
+}
+@media (max-width: 540px) {
+  .suite-kind {
+    min-height: 44px;
+  }
+  .suite-explorer {
+    padding: 12px;
+  }
+  .stage-detail {
+    padding-left: 0;
+  }
+  .drill-facts > div {
+    grid-template-columns: 1fr;
+    gap: 3px;
+  }
+  .stage-state {
+    max-width: 56px;
+  }
 }
 .mode-switch {
   display: flex;

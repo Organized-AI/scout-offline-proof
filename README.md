@@ -16,6 +16,10 @@ python3 -m proof serve
 
 Open <http://127.0.0.1:8741>. Choose a task suite and **Local model** for actual MLX inference, or **Harness check** to test the pipeline without a language model. The harness is labeled separately and can never earn **Verified offline**. The dashboard keeps your settings on this browser and uses Scout's charcoal/yellow palette, IBM Plex typography, and compact cards. Dark and light themes are available; fonts are served locally.
 
+Click a task-family chip (**Grounded Q&A**, **Extraction**, or **Tool selection**) to explore its purpose, tuning focus, and individual tasks. Each task expands into its instruction, input, required result, types or tool contracts, and acceptance checks. Definitions load from the selected suite, including custom JSON files, before model inference. Links to recorded responses appear only when the selected suite and recorded suite-file fingerprints match.
+
+Each **Run stage** is also expandable: inspect what happens, what its result establishes, and the available setup checks, hashes, network probes, runtime information, or task verdicts. Stage status is labeled with the latest recorded run's suite, mode, date, and ID; changing the selected suite does not create new evidence. Panels remain open during live updates. Expected definitions, real model outputs, and fixture responses are labeled separately.
+
 For real inference, use an existing MLX Python environment, or prepare one while online:
 
 ```sh
@@ -166,6 +170,7 @@ Technology: Python standard library, MLX / mlx-lm, plain HTML/CSS/JavaScript. Th
 ```sh
 python3 -m unittest discover -s tests -v
 node --check web/app.js
+node --check web/explore.js
 ```
 
 Tests exercise unsupported sources, invented quotations, wrong facts, abstention, typed extraction, tool-contract violations, malformed suites and outputs, grading-data separation, missing assets, real macOS network isolation, timeouts, input changes, request authorization, and the distinction between harness results and model proofs.

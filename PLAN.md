@@ -52,6 +52,7 @@ The current release supports one machine per run, MLX text models, UTF-8 Markdow
 - Agent tool selection was prioritized because the [Antler Agents track and event rubric](https://common-scooter-829.notion.site/AITX-MLOps-World-Community-Hackathon-Austin-Tech-Week-4021e636288e81e08278fd9a977d7639) emphasize useful agent tooling, complete working systems, technical depth, and performance. This is a product choice based on the rubric, not a claim of organizer endorsement.
 - Added failure replay: 32 agent-decision cases (4 accept / 28 reject), or 63 cases across all suites. Reports distinguish evaluator correctness from model accuracy. Tests inject always-accept and always-reject evaluators to confirm that both defects fail replay.
 - The local model's tool-selection role is explicitly described as the decision model in the submission and Loom narrative; proposed actions remain unexecuted.
+- Added clickable task-family exploration and all five stage drill-downs. Task definitions come from validated suite files, including custom suites; stage panels explain their purpose and expose actual report evidence. Recorded-response links require matching suite revisions. The server exposes acceptance definitions only to the authorized operator; the real-model payload still excludes grading data.
 
 ## Outcome measurement across online and offline execution
 
@@ -121,7 +122,7 @@ The main product question is: **Which configuration delivers the requested outco
 
 The drill-down path is **workflow → configuration comparison → individual run → stage/task checks → source, tool result, or final artifact**. Comparisons should show both outcome and efficiency rather than hiding tradeoffs in a single score. The screenshots' weighted model scores are design references, not an adopted definition of workflow completion. Keep fixtures and estimates out of measured rankings; keep missing values visible as unmeasured rather than zero.
 
-Current implementation remains the local task dashboard with per-task evidence and stage status. The comparison view, expanded stage drill-down, complete workflow accounting, and online execution controls described here are planned. Do not copy screenshot metrics into run evidence.
+Current implementation includes the local task dashboard, clickable family/task definitions, per-task evidence, and expandable stages with explanations and recorded evidence. The comparison view, complete workflow accounting, actual tool traces, and online execution controls described here are planned. Do not copy screenshot metrics into run evidence.
 
 ## Workflow portability and continuous improvement
 

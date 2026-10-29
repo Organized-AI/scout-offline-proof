@@ -154,6 +154,17 @@ def summary(suite):
         "task_count": len(suite["tasks"]), "kinds": sorted({t["kind"] for t in suite["tasks"]})}
 
 
+def describe(suite):
+    """Operator-facing task contracts; never used as the inference payload."""
+    tasks = []
+    for task in suite["tasks"]:
+        item = prepare_task(task, [], "mlx")
+        item.pop("documents")
+        item.update({k: task[k] for k in ["suite_id", "expected", "source", "answerable"] if k in task})
+        tasks.append(item)
+    return {**summary(suite), "files": suite["files"], "tasks": tasks}
+
+
 def catalog():
     return [summary(load_suite(name)) for name in (*BUILTINS, "all")]
 
